@@ -464,7 +464,7 @@ undefined ;;Value: undefined 变量在当前作用域未定义
 
 但是这样仅仅构成了声明，而没有调用；正如《解释器的简明教程》一文中介绍的`(func args...)`的`Apply::eval`这里其实并没有引入新的语法，只是用自定义的`lambda`表达式替代了`primitive`的应用。
 
-我们要求你支持新的语法`((lambda arg1....argn procedure) var1....varn)`,你需要将`var1....varn`传入`arg1....argn`并代入`procedure`中求值:譬如:
+我们要求你支持新的语法`((lambda (arg1....argn) procedure) var1....varn)`,你需要将`var1....varn`传入`arg1....argn`并代入`procedure`中求值:譬如:
 
 ```Scheme
 (((lambda (+) +) *) 2 3)
