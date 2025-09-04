@@ -21,8 +21,8 @@
     (boolean? 7)
     (null? '())
     (null? '(1 2))
-    (fixnum? 1234)
-    (fixnum? '())
+    (number? 1234)
+    (number? '())
     (procedure? (lambda (x) x))
     (procedure? 7)
     (<= 1 8)
@@ -60,7 +60,7 @@
     (> 7 8)
     (let () (boolean? #f))
     (let ([x (cons 1 '())] [y (cons 1 '())]) (eq? x y))
-    (fixnum? 7)
+    (number? 7)
     (null? '())
     (letrec () (pair? (cons 1 '())))
     ;; pred prims in effect
@@ -73,7 +73,7 @@
     (letrec () 
       (let ([x (cons 1 '())] [y (cons 1 '())])
         (begin (eq? x y) 10)))
-    (letrec () (begin (fixnum? 7) 10))
+    (letrec () (begin (number? 7) 10))
     (let () (null? '()) 15)
     (letrec () (pair? (cons 1 '())) 20)
     ;; effect prims in value
@@ -233,8 +233,8 @@
            [odd (lambda (y) (if (= y 0) (id (cdr bools)) (even (- y 1))))])
           (odd 5))))
     (let ([x 7] [y 4])
-      (or (and (fixnum? x) (= x 4) (fixnum? y) (= y 7))
-          (and (fixnum? x) (= x 7) (fixnum? y) (= y 4))))
+      (or (and (number? x) (= x 4) (number? y) (= y 7))
+          (and (number? x) (= x 7) (number? y) (= y 4))))
     (letrec ([f (lambda (x) (+ 1 x))]
              [g (lambda (x) (- x 1))]
              [t (lambda (x) (- x 1))]
@@ -274,7 +274,7 @@
     (letrec ([num-list? (lambda (ls)
                           (if (null? ls)
                               #t
-                              (if (fixnum? (car ls))
+                              (if (number? (car ls))
                                   (num-list? (cdr ls))
                                   #f)))]
              [length (lambda (ls)
@@ -298,7 +298,7 @@
     (letrec ([num-list? (lambda (ls)
                           (if (null? ls)
                               #t
-                              (if (fixnum? (car ls))
+                              (if (number? (car ls))
                                   (num-list? (cdr ls))
                                   #f)))]
              [list-product (lambda (ls)
