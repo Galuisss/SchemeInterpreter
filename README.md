@@ -3,7 +3,7 @@
 > SJTU CS1958-01 2025Fall 第三次大作业
 >
 
-请先阅读[解释器简明教程](https://notes.sjtu.edu.cn/pzbJsIoKQbSwt66MZR-vdQ)，有兴趣可以阅读[为什么Lisp语言如此先进？](https://www.ruanyifeng.com/blog/2010/10/why_lisp_is_superior.html):)
+请先阅读(解释器简明教程)(https://notes.sjtu.edu.cn/pzbJsIoKQbSwt66MZR-vdQ)，有兴趣可以阅读(为什么Lisp语言如此先进？)(https://www.ruanyifeng.com/blog/2010/10/why_lisp_is_superior.html):)
 
 ## 内容概述
 
@@ -12,7 +12,7 @@
 - 采用 S-表达式，除了 `Integer` 、`Boolean` 类型与变量 `var`，其余语法形如 `(expr exprs ...)`，例如 `(+ 1 3)`
 - 函数也被视作一个变量
 
-如果你对 `Scheme` 感兴趣，可以在网上自行查阅相关信息，譬如[Scheme拓展教程](https://joytsing.cn/posts/56075/#toc-heading-19)。本次大作业并不需要你实现 `Scheme` 所有的功能，因此阅读文档即可完成所有的需求。本文中涉及到的`Scheme`标准以`R5RS`为主，也加入了一些`R6RS`标准，可以通过 [R5RS在线解释器](`https://spritely.institute/hoot/`)和`chez-scheme`进行调试，对于文档中未说明的未定义行为，请与大作业发布者进行交流说明。
+如果你对 `Scheme` 感兴趣，可以在网上自行查阅相关信息，譬如(Scheme拓展教程)(https://joytsing.cn/posts/56075/#toc-heading-19)。本次大作业并不需要你实现 `Scheme` 所有的功能，因此阅读文档即可完成所有的需求。本文中涉及到的`Scheme`标准以`R5RS`为主，也加入了一些`R6RS`标准，可以通过 (R5RS在线解释器)(`https://spritely.institute/hoot/`)和`chez-scheme`进行调试，对于文档中未说明的未定义行为，请与大作业发布者进行交流说明。
 
 ## 项目框架
 
@@ -61,8 +61,8 @@ cmake --build build --target code
 
 - `Def.hpp`： 声明需要用到的类型、枚举类型和辅助函数
 - `Def.cpp`： 定义了辅助函数和两个 `map`， 其中 `primitive` 用来存 `library` 函数的关键字， `reserved_words` 存其他语法的关键字（希望这两个函数和枚举类型能对你有所帮助， 当然你也可以不用我们提供的工具自己实现所有的功能， it's up to you）
-- `RE.hpp` 与 `RE.cpp`： 定义了需要报错时需要使用的异常类型， 你需要学习异常类型的使用， 具体可以看[这里](https://www.runoob.com/cplusplus/cpp-exceptions-handling.html)
-- `syntax.hpp` 与 `syntax.cpp`： 定义了所有的 `Syntax` 和[子类](https://www.runoob.com/cplusplus/cpp-inheritance.html)， 具体实现在 `syntax.cpp` 中
+- `RE.hpp` 与 `RE.cpp`： 定义了需要报错时需要使用的异常类型， 你需要学习异常类型的使用， 具体可以看(这里)(https://www.runoob.com/cplusplus/cpp-exceptions-handling.html)
+- `syntax.hpp` 与 `syntax.cpp`： 定义了所有的 `Syntax` 和(子类)(https://www.runoob.com/cplusplus/cpp-inheritance.html)， 具体实现在 `syntax.cpp` 中
 - `expr.hpp` 与 `expr.cpp`： 定义了所有的 `Expr` 和子类， 子类的构造函数在 `expr.cpp` 中
 - `value.hpp` 与 `value.cpp`： 定义了所有的 `Value` 和子类， 子类的构造函数和输出方式在 `value.cpp` 中； 此外， 我们提到的作用域， 被实现在 `Assoc` 和 `AssocList` 中， 具体可以参考这两个文件
 - `main.cpp`： REPL 的执行部分；
@@ -71,7 +71,7 @@ cmake --build build --target code
 
 ### 评测
 
-在 [ACM OJ](https://acm.sjtu.edu.cn/OnlineJudge/problem/2788)上进行提交测评， 我们也会下发部分数据来帮助你在本地进行调试。
+在 (ACM OJ)(https://acm.sjtu.edu.cn/OnlineJudge/problem/2788)上进行提交测评， 我们也会下发部分数据来帮助你在本地进行调试。
 
 具体而言， 你只需要在代码提交页面输入 `git` 仓库的地址。
 
@@ -214,7 +214,7 @@ R = 119
 
 在`Scheme`中，我们用形如`(A . B)`的形式表示一个二元数对；而像这样的二元数对我们一般通过`(cons A B)`的形式生成；譬如下图就分别表示`(cons 1 2)`与`(cons 3 (cons 1 2))`.其中每个二元数对的首和尾用`car`和`cdr`表示.
 
-![](figures/001.png)
+!()(figures/001.png)
 
 当然`(cons A B)`中`A B`的类型完全可以是不同的，也可以嵌套命令：
 
@@ -228,7 +228,7 @@ R = 119
 
 通过嵌套命令，我们很容易就发现我们可以通过`cons`的嵌套实现列表(`list`)，比如下图就是列表`(1 2 3)`的实现；
 
-![](figures/002.png)
+!()(figures/002.png)
 
 可见其本质是一个从`'()`开始递归构造的`Pair`链.
 
@@ -587,20 +587,20 @@ undefined ;;Value: undefined 变量在当前作用域未定义
 ```
 例3：你应当正确实现变量在内层与外层的覆盖，譬如下式应当输出`inner`而非`outer`。
 ```Scheme
-(let ([x (quote inner)])
-	(let ([func (lambda () x)])
-      	(let ([x (quote outer)]) (func))))
+(let ((x (quote inner)))
+	(let ((func (lambda () x)))
+      	(let ((x (quote outer))) (func))))
 ;;Value: inner
 ```
 例4: 这里的变量绑定与`var`要求相同，支持`primitives`与`reserved_words`;
 ```Scheme
-let ([+ 1]) +)
+let (((+ 1)) +)
 ;;Value: 1
-(let ([+ -]) (+ 2 1))
+(let ((+ -)) (+ 2 1))
 ;;Value: 1
-(let ([+ 1]) +) ;;Value: + 在 let 中的作用域内是一个变量，它对应的值为 1
+(let ((+ 1)) +) ;;Value: + 在 let 中的作用域内是一个变量，它对应的值为 1
 ;;Value: 1
-(let ([x (lambda (y) y)]) x)
+(let ((x (lambda (y) y))) x)
 ;;Value: #<procedure>
 ```
 
@@ -612,11 +612,11 @@ let ([+ 1]) +)
 
 ```scheme
 (let
-	([fact
+	((fact
       	(lambda (n)
           	(if (= n 0)
 				1
-                (* n (fact (- n 1)))))])
+                (* n (fact (- n 1)))))))
 	(fact 5))
 ```
 
@@ -630,8 +630,8 @@ let ([+ 1]) +)
 
 ```scheme
 (letrec
-	([a 1]
-     [b a])
+	((a 1)
+     (b a))
 	b)
 ```
 
@@ -639,8 +639,8 @@ let ([+ 1]) +)
 
 ```scheme
 (letrec
-	([a 1]
-     [b (lambda () a)])
+	((a 1)
+     (b (lambda () a)))
 	(b))
 ```
 
