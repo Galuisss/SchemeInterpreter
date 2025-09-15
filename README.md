@@ -682,11 +682,6 @@ let (((+ 1)) +)
 (set-car! (car tree) 100)  ; changing 1 to 100 
 
 tree
-;;Value: ((100 2) (3 4 5) (6 7 8 9))
-
-(set-cdr! (third tree) '(a b c)) ; changing  '(7 8 9) to '(a b c) 
-
-tree
 ;;Value: ((100 2) (3 4 5) (6 a b c))
 ```
 
