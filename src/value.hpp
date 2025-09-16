@@ -104,6 +104,7 @@ struct Rational : ValueBase {
     int denominator;
     Rational(int, int);
     virtual void show(std::ostream &) override;
+    explicit Rational(const Integer& a);
 };
 Value RationalV(int, int);
 

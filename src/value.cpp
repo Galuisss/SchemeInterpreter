@@ -128,6 +128,8 @@ static int gcd(int a, int b) {
     return a;
 }
 
+Rational::Rational(const Integer& a) : ValueBase(V_RATIONAL), numerator(a.n), denominator(1) {}
+
 Rational::Rational(int num, int den) : ValueBase(V_RATIONAL) {
     if (den == 0) {
         throw std::runtime_error("Division by zero");

@@ -55,14 +55,19 @@ void REPL(){
         Syntax stx = readSyntax(std :: cin); // read
         try{
             Expr expr = stx -> parse(global_env); // parse
-            // stx -> show(std :: cout); // syntax print
+            /*
+            std::cout << "DEBUG: ";
+            stx -> show(std :: cout); // syntax print
+            std::cout << std::endl;
+            */
+
             Value val = expr -> eval(global_env);
             if (val -> v_type == V_TERMINATE)
                 break;
             val -> show(std :: cout); // value print
         }
         catch (const RuntimeError &RE){
-            // std :: cout << RE.message();
+            std :: cout << "DEBUG: " << RE.message() << std::endl;
             std :: cout << "RuntimeError";
         }
         puts("");

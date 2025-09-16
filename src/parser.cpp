@@ -28,6 +28,7 @@ extern std::map<std::string, ExprType> reserved_words;
  * @brief Default parse method (should be overridden by subclasses)
  */
 Expr Syntax::parse(Assoc &env) {
+    return (*this)->parse(env);
     throw RuntimeError("Unimplemented parse method");
 }
 
@@ -37,6 +38,7 @@ Expr Number::parse(Assoc &env) {
 
 Expr RationalSyntax::parse(Assoc &env) {
     //TODO: complete the rational parser
+    return Expr(new RationalNum(numerator, denominator));
 }
 
 Expr SymbolSyntax::parse(Assoc &env) {
@@ -64,6 +66,7 @@ Expr List::parse(Assoc &env) {
     //If not, use Apply function to package to a closure;
     //If so, find whether it's a variable or a keyword;
     SymbolSyntax *id = dynamic_cast<SymbolSyntax*>(stxs[0].get());
+    
     if (id == nullptr) {
         //TODO: TO COMPLETE THE LOGIC
     }else{
@@ -73,8 +76,12 @@ Expr List::parse(Assoc &env) {
     }
     if (primitives.count(op) != 0) {
         vector<Expr> parameters;
+
+        //std::cout << "DEBUG: " << stxs.size() << std::endl;
         //TODO: TO COMPLETE THE PARAMETER PARSER LOGIC
-        
+        for (auto it = stxs.begin() + 1; it != stxs.end(); it++) {
+            parameters.push_back(it->parse(env));
+        }
         ExprType op_type = primitives[op];
         if (op_type == E_PLUS) {
             if (parameters.size() == 2) {
@@ -83,11 +90,23 @@ Expr List::parse(Assoc &env) {
                 throw RuntimeError("Wrong number of arguments for +");
             }
         } else if (op_type == E_MINUS) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new Minus(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_MUL) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new Mult(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         }  else if (op_type == E_DIV) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new Div(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_MODULO) {
             if (parameters.size() != 2) {
                 throw RuntimeError("Wrong number of arguments for modulo");
@@ -96,15 +115,35 @@ Expr List::parse(Assoc &env) {
         } else if (op_type == E_LIST) {
             return Expr(new ListFunc(parameters));
         } else if (op_type == E_LT) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new Less(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_LE) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new LessEq(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_EQ) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new Equal(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_GE) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new GreaterEq(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_GT) {
-            //TODO: TO COMPLETE THE LOGIC
+            if (parameters.size() == 2) {
+                return Expr(new Greater(parameters[0], parameters[1])); 
+            } else {
+                throw RuntimeError("Wrong number of arguments for +");
+            }
         } else if (op_type == E_AND) {
             return Expr(new AndVar(parameters));
         } else if (op_type == E_OR) {

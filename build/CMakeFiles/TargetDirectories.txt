@@ -1,0 +1,3 @@
+/home/pxy/SchemeInterpreter/build/CMakeFiles/code.dir
+/home/pxy/SchemeInterpreter/build/CMakeFiles/edit_cache.dir
+/home/pxy/SchemeInterpreter/build/CMakeFiles/rebuild_cache.dir

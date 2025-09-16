@@ -100,30 +100,111 @@ Value Var::eval(Assoc &e) { // evaluation of variable
     return matched_value;
 }
 
+bool isInt(const Value &v) {
+    return v->v_type == V_INT;
+}
+
+bool isRat(const Value &v) {
+    return v->v_type == V_RATIONAL;
+}
+
+bool isNum(const Value &v) {
+    return isInt(v) || isRat(v);
+}
+Rational toRational(const Value& v) {
+    switch (v->v_type) {
+    case V_INT:
+        return Rational(*static_cast<Integer*>(v.get()));
+    case V_RATIONAL:
+        return *static_cast<Rational*>(v.get());
+    default:
+        throw std::runtime_error("Not a number");
+    }
+}
+
 Value Plus::evalRator(const Value &rand1, const Value &rand2) { // +
     //TODO: To complete the addition logic
-    throw(RuntimeError("Wrong typename"));
+    if (isNum(rand1) && isNum(rand2)) {
+        Rational addend1 = toRational(rand1);
+        Rational addend2 = toRational(rand2);
+        int numerator1 = addend1.numerator, denominator1 = addend1.denominator;
+        int numerator2 = addend2.numerator, denominator2 = addend2.denominator;
+        int numerator3 = numerator1 * denominator2 + denominator1 * numerator2;
+        int denominator3 = denominator1 * denominator2;
+        Rational ans(numerator3, denominator3);
+
+        if (ans.denominator == 1) {
+            return IntegerV(ans.numerator);
+        }
+        return RationalV(numerator3, denominator3);
+    }
+    return rand1;
 }
 
 Value Minus::evalRator(const Value &rand1, const Value &rand2) { // -
     //TODO: To complete the substraction logic
+    if (isNum(rand1) && isNum(rand2)) {
+        Rational addend1 = toRational(rand1);
+        Rational addend2 = toRational(rand2);
+        int numerator1 = addend1.numerator, denominator1 = addend1.denominator;
+        int numerator2 = addend2.numerator, denominator2 = addend2.denominator;
+        int numerator3 = numerator1 * denominator2 - denominator1 * numerator2;
+        int denominator3 = denominator1 * denominator2;
+        Rational ans(numerator3, denominator3);
+
+        if (ans.denominator == 1) {
+            return IntegerV(ans.numerator);
+        }
+        return RationalV(numerator3, denominator3);
+    }
     throw(RuntimeError("Wrong typename"));
 }
 
 Value Mult::evalRator(const Value &rand1, const Value &rand2) { // *
     //TODO: To complete the Multiplication logic
+    if (isNum(rand1) && isNum(rand2)) {
+        Rational addend1 = toRational(rand1);
+        Rational addend2 = toRational(rand2);
+        int numerator1 = addend1.numerator, denominator1 = addend1.denominator;
+        int numerator2 = addend2.numerator, denominator2 = addend2.denominator;
+        int numerator3 = numerator1 * numerator2;
+        int denominator3 = denominator1 * denominator2;
+        Rational ans(numerator3, denominator3);
+
+        if (ans.denominator == 1) {
+            return IntegerV(ans.numerator);
+        }
+        return RationalV(numerator3, denominator3);
+    }
     throw(RuntimeError("Wrong typename"));
 }
 
 Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
     //TODO: To complete the dicision logic
+    if (isNum(rand1) && isNum(rand2)) {
+        Rational addend1 = toRational(rand1);
+        Rational addend2 = toRational(rand2);
+        int numerator1 = addend1.numerator, denominator1 = addend1.denominator;
+        int numerator2 = addend2.numerator, denominator2 = addend2.denominator;
+        if (numerator2 == 0) {
+            throw(RuntimeError("Division by zero"));
+        }
+        int numerator3 = numerator1 * numerator2;
+        int denominator3 = denominator1 * denominator2;
+        Rational ans(numerator3, denominator3);
+
+        if (ans.denominator == 1) {
+            return IntegerV(ans.numerator);
+        }
+        return RationalV(numerator3, denominator3);
+    }
     throw(RuntimeError("Wrong typename"));
 }
 
 Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
     if (rand1->v_type == V_INT && rand2->v_type == V_INT) {
-        int dividend = dynamic_cast<Integer*>(rand1.get())->n;
-        int divisor = dynamic_cast<Integer*>(rand2.get())->n;
+        int dividend = static_cast<Integer*>(rand1.get())->n;
+        int divisor = static_cast<Integer*>(rand2.get())->n;
         if (divisor == 0) {
             throw(RuntimeError("Division by zero"));
         }
@@ -218,27 +299,31 @@ int compareNumericValues(const Value &v1, const Value &v2) {
 
 Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
     //TODO: To complete the less logic
-    throw(RuntimeError("Wrong typename"));
+    int res = compareNumericValues(rand1, rand2);
+    return BooleanV(res == -1);
 }
 
 Value LessEq::evalRator(const Value &rand1, const Value &rand2) { // <=
-    //TODO: To complete the lesseq logic
-    throw(RuntimeError("Wrong typename"));
+    int res = compareNumericValues(rand1, rand2);
+    return BooleanV(res == -1 || res == 0);
 }
 
+
 Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
-    //TODO: To complete the equal logic
-    throw(RuntimeError("Wrong typename"));
+    int res = compareNumericValues(rand1, rand2);
+    return BooleanV(res == 0);
 }
 
 Value GreaterEq::evalRator(const Value &rand1, const Value &rand2) { // >=
     //TODO: To complete the greatereq logic
-    throw(RuntimeError("Wrong typename"));
+    int res = compareNumericValues(rand1, rand2);
+    return BooleanV(res == 0 || res == 1);
 }
 
 Value Greater::evalRator(const Value &rand1, const Value &rand2) { // >
     //TODO: To complete the greater logic
-    throw(RuntimeError("Wrong typename"));
+    int res = compareNumericValues(rand1, rand2);
+    return BooleanV(res == 1);
 }
 
 Value LessVar::evalRator(const std::vector<Value> &args) { // < with multiple args
@@ -372,6 +457,7 @@ Value Lambda::eval(Assoc &env) {
 }
 
 Value Apply::eval(Assoc &e) {
+    /*
     if (rator->eval(e)->v_type != V_PROC) {throw RuntimeError("Attempt to apply a non-procedure");}
 
     //TODO: TO COMPLETE THE CLOSURE LOGIC
@@ -385,6 +471,7 @@ Value Apply::eval(Assoc &e) {
     Assoc param_env = ;
 
     return clos_ptr->e->eval(param_env);
+    */
 }
 
 Value Define::eval(Assoc &env) {

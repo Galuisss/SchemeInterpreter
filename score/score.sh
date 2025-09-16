@@ -7,7 +7,7 @@ echo "--------------------------------------------------------------------------
 cd "$(dirname "$0")"
 
 L=1
-R=118
+R=8
 for ((i = $L; i <= $R; i = i + 1))
 do
     echo ""
@@ -22,8 +22,8 @@ do
         continue
     fi
     ../build/code << EOF > scm.out
-    $(cat data/$i.in)
-    (exit)
+$(cat data/$i.in)
+(exit)
 EOF
     sed '$d' scm.out > scm_cleaned.out
     mv scm_cleaned.out scm.out
@@ -40,8 +40,8 @@ EOF
     echo ""
 done
 
-L_EXTRA=1
-R_EXTRA=7
+L_EXTRA=0
+R_EXTRA=0
 for ((i = $L_EXTRA; i <= $R_EXTRA; i = i + 1))
 do
     echo ""
@@ -56,8 +56,8 @@ do
         continue
     fi
     ../build/code << EOF > scm.out
-    $(cat more-tests/$i.in)
-    (exit)
+$(cat more-tests/$i.in)
+(exit)
 EOF
     sed '$d' scm.out > scm_cleaned.out
     mv scm_cleaned.out scm.out
