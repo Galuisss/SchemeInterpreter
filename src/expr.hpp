@@ -131,6 +131,7 @@ struct Variadic : ExprBase {
 // ================================================================================
 
 struct Plus : Binary {
+    Plus();
     Plus(const Expr &, const Expr &);
     virtual Value evalRator(const Value &, const Value &) override;
 };

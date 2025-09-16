@@ -77,79 +77,91 @@ Expr List::parse(Assoc &env) {
     if (primitives.count(op) != 0) {
         vector<Expr> parameters;
 
-        //std::cout << "DEBUG: " << stxs.size() << std::endl;
-        //TODO: TO COMPLETE THE PARAMETER PARSER LOGIC
         for (auto it = stxs.begin() + 1; it != stxs.end(); it++) {
             parameters.push_back(it->parse(env));
         }
         ExprType op_type = primitives[op];
+        // Arithmetic operations
         if (op_type == E_PLUS) {
             if (parameters.size() == 2) {
                 return Expr(new Plus(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new PlusVar(parameters));
             }
         } else if (op_type == E_MINUS) {
             if (parameters.size() == 2) {
                 return Expr(new Minus(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new MinusVar(parameters));
             }
         } else if (op_type == E_MUL) {
             if (parameters.size() == 2) {
                 return Expr(new Mult(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new MultVar(parameters));
             }
         }  else if (op_type == E_DIV) {
             if (parameters.size() == 2) {
                 return Expr(new Div(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new DivVar(parameters));
             }
         } else if (op_type == E_MODULO) {
             if (parameters.size() != 2) {
                 throw RuntimeError("Wrong number of arguments for modulo");
             }
             return Expr(new Modulo(parameters[0], parameters[1]));
-        } else if (op_type == E_LIST) {
-            return Expr(new ListFunc(parameters));
+        } else if (op_type == E_EXPT) {
+            if (parameters.size() != 2) {
+                throw RuntimeError("Wrong number of arguments for expt");
+            }
+            return Expr(new Expt(parameters[0], parameters[1]));
+        // Comparison operations
         } else if (op_type == E_LT) {
             if (parameters.size() == 2) {
                 return Expr(new Less(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new LessVar(parameters));
             }
         } else if (op_type == E_LE) {
             if (parameters.size() == 2) {
                 return Expr(new LessEq(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new LessEqVar(parameters));
             }
         } else if (op_type == E_EQ) {
             if (parameters.size() == 2) {
                 return Expr(new Equal(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new EqualVar(parameters));
             }
         } else if (op_type == E_GE) {
             if (parameters.size() == 2) {
                 return Expr(new GreaterEq(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new GreaterEqVar(parameters));
             }
         } else if (op_type == E_GT) {
             if (parameters.size() == 2) {
                 return Expr(new Greater(parameters[0], parameters[1])); 
             } else {
-                throw RuntimeError("Wrong number of arguments for +");
+                return Expr(new GreaterVar(parameters));
             }
+        // Logic operations
+        } else if (op_type == E_NOT) {
+            if (parameters.size() != 1) {
+                throw RuntimeError("Wrong number of arguments for not");
+            }
+            return Expr(new Not(parameters[0]));
         } else if (op_type == E_AND) {
             return Expr(new AndVar(parameters));
         } else if (op_type == E_OR) {
             return Expr(new OrVar(parameters));
+        // List operations    
+        } else if (op_type == E_LIST) {
+            return Expr(new ListFunc(parameters));
         } else {
-            //TODO: TO COMPLETE THE LOGIC
+
         }
     }
 

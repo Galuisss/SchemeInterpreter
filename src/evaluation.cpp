@@ -16,6 +16,9 @@
 #include <vector>
 #include <map>
 #include <climits>
+#include <numeric>
+#include <algorithm>
+#include <functional>
 
 extern std::map<std::string, ExprType> primitives;
 extern std::map<std::string, ExprType> reserved_words;
@@ -58,6 +61,10 @@ Value Binary::eval(Assoc &e) { // evaluation of two-operators primitive
 
 Value Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
     // TODO: TO COMPLETE THE VARIADIC CLASS
+    std::vector<Value> results;
+    results.reserve(rands.size());
+    std::transform(rands.begin(), rands.end(), std::back_inserter(results), [&e](const Expr &x){return x->eval(e);});
+    return evalRator(results);
 }
 
 Value Var::eval(Assoc &e) { // evaluation of variable
@@ -122,8 +129,7 @@ Rational toRational(const Value& v) {
     }
 }
 
-Value Plus::evalRator(const Value &rand1, const Value &rand2) { // +
-    //TODO: To complete the addition logic
+Value H_Plus(const Value &rand1, const Value &rand2) {
     if (isNum(rand1) && isNum(rand2)) {
         Rational addend1 = toRational(rand1);
         Rational addend2 = toRational(rand2);
@@ -138,10 +144,15 @@ Value Plus::evalRator(const Value &rand1, const Value &rand2) { // +
         }
         return RationalV(numerator3, denominator3);
     }
-    return rand1;
+    throw(RuntimeError("Wrong typename"));
 }
 
-Value Minus::evalRator(const Value &rand1, const Value &rand2) { // -
+Value Plus::evalRator(const Value &rand1, const Value &rand2) { // +
+    //TODO: To complete the addition logic
+    return H_Plus(rand1, rand2);
+}
+
+Value H_Minus(const Value &rand1, const Value &rand2) { // -
     //TODO: To complete the substraction logic
     if (isNum(rand1) && isNum(rand2)) {
         Rational addend1 = toRational(rand1);
@@ -160,7 +171,11 @@ Value Minus::evalRator(const Value &rand1, const Value &rand2) { // -
     throw(RuntimeError("Wrong typename"));
 }
 
-Value Mult::evalRator(const Value &rand1, const Value &rand2) { // *
+Value Minus::evalRator(const Value &rand1, const Value &rand2) { // -
+    return H_Minus(rand1, rand2);
+}
+
+Value H_Mult(const Value &rand1, const Value &rand2) { // *
     //TODO: To complete the Multiplication logic
     if (isNum(rand1) && isNum(rand2)) {
         Rational addend1 = toRational(rand1);
@@ -179,7 +194,12 @@ Value Mult::evalRator(const Value &rand1, const Value &rand2) { // *
     throw(RuntimeError("Wrong typename"));
 }
 
-Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
+Value Mult::evalRator(const Value &rand1, const Value &rand2) { // *
+    //TODO: To complete the Multiplication logic
+    return H_Mult(rand1, rand2);
+}
+
+Value H_Div(const Value &rand1, const Value &rand2) { // /
     //TODO: To complete the dicision logic
     if (isNum(rand1) && isNum(rand2)) {
         Rational addend1 = toRational(rand1);
@@ -189,8 +209,8 @@ Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
         if (numerator2 == 0) {
             throw(RuntimeError("Division by zero"));
         }
-        int numerator3 = numerator1 * numerator2;
-        int denominator3 = denominator1 * denominator2;
+        int numerator3 = numerator1 * denominator2;
+        int denominator3 = denominator1 * numerator2;
         Rational ans(numerator3, denominator3);
 
         if (ans.denominator == 1) {
@@ -199,6 +219,10 @@ Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
         return RationalV(numerator3, denominator3);
     }
     throw(RuntimeError("Wrong typename"));
+}
+
+Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
+    return H_Div(rand1, rand2);
 }
 
 Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
@@ -214,19 +238,19 @@ Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
 }
 
 Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple args
-    //TODO: To complete the addition logic
+    return std::accumulate(args.begin() + 1, args.end(), args[0], H_Plus);
 }
 
 Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple args
-    //TODO: To complete the substraction logic
+    return std::accumulate(args.begin() + 1, args.end(), args[0], H_Minus);
 }
 
 Value MultVar::evalRator(const std::vector<Value> &args) { // * with multiple args
-    //TODO: To complete the multiplication logic
+    return std::accumulate(args.begin() + 1, args.end(), args[0], H_Mult);
 }
 
 Value DivVar::evalRator(const std::vector<Value> &args) { // / with multiple args
-    //TODO: To complete the divisor logic
+    return std::accumulate(args.begin() + 1, args.end(), args[0], H_Div);
 }
 
 Value Expt::evalRator(const Value &rand1, const Value &rand2) { // expt
@@ -297,53 +321,86 @@ int compareNumericValues(const Value &v1, const Value &v2) {
     throw RuntimeError("Wrong typename in numeric comparison");
 }
 
-Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
-    //TODO: To complete the less logic
+bool H_Less(const Value &rand1, const Value &rand2) { // <
     int res = compareNumericValues(rand1, rand2);
-    return BooleanV(res == -1);
+    return res == -1;
+}
+
+Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
+    return BooleanV(H_Less(rand1, rand2));
+}
+
+bool H_LessEq(const Value &rand1, const Value &rand2) { // <=
+    int res = compareNumericValues(rand1, rand2);
+    return res == -1 || res == 0;
 }
 
 Value LessEq::evalRator(const Value &rand1, const Value &rand2) { // <=
-    int res = compareNumericValues(rand1, rand2);
-    return BooleanV(res == -1 || res == 0);
+    return BooleanV(H_LessEq(rand1, rand2));
 }
 
+bool H_Equal(const Value &rand1, const Value &rand2) { // =
+    int res = compareNumericValues(rand1, rand2);
+    return res == 0;
+}
 
 Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
+    return BooleanV(H_Equal(rand1, rand2));
+}
+
+bool H_GreaterEq(const Value &rand1, const Value &rand2) { // >=
     int res = compareNumericValues(rand1, rand2);
-    return BooleanV(res == 0);
+    return res == 0 || res == 1;
 }
 
 Value GreaterEq::evalRator(const Value &rand1, const Value &rand2) { // >=
-    //TODO: To complete the greatereq logic
+    return BooleanV(H_GreaterEq(rand1, rand2));
+}
+
+bool H_Greater(const Value &rand1, const Value &rand2) { // >
     int res = compareNumericValues(rand1, rand2);
-    return BooleanV(res == 0 || res == 1);
+    return res == 1;
 }
 
 Value Greater::evalRator(const Value &rand1, const Value &rand2) { // >
-    //TODO: To complete the greater logic
-    int res = compareNumericValues(rand1, rand2);
-    return BooleanV(res == 1);
+    return BooleanV(H_Greater(rand1, rand2));
 }
 
-Value LessVar::evalRator(const std::vector<Value> &args) { // < with multiple args
-    //TODO: To complete the less logic
+// 输入比较函数，输出多变量比较函数
+std::function<Value(const std::vector<Value> &args)> VarFactory(std::function<bool(const Value &rand1, const Value &rand2)> cmp) {
+    return [cmp](const std::vector<Value> &args) {
+        bool sorted = std::accumulate(
+            args.begin() + 1, args.end(), true,
+            [cmp, it = args.begin()](bool acc, const Value& x) mutable {
+                bool ok = cmp(*it, x);
+                ++it;
+                return acc && ok;
+            }
+        );
+        return BooleanV(sorted);
+    };
 }
 
+static auto H_LessVar = VarFactory(H_Less);
+static auto H_LessEqVar = VarFactory(H_LessEq);
+static auto H_EqualVar = VarFactory(H_Equal);
+static auto H_GreaterEqVar = VarFactory(H_GreaterEq);
+static auto H_GreaterVar = VarFactory(H_Greater);
+
+Value LessVar::evalRator(const std::vector<Value>& args) { // <= with multiple args
+    return H_LessVar(args);
+}
 Value LessEqVar::evalRator(const std::vector<Value> &args) { // <= with multiple args
-    //TODO: To complete the lesseq logic
+    return H_LessEqVar(args);
 }
-
 Value EqualVar::evalRator(const std::vector<Value> &args) { // = with multiple args
-    //TODO: To complete the equal logic
+    return H_EqualVar(args);
 }
-
 Value GreaterEqVar::evalRator(const std::vector<Value> &args) { // >= with multiple args
-    //TODO: To complete the greatereq logic
+    return H_GreaterEqVar(args);
 }
-
 Value GreaterVar::evalRator(const std::vector<Value> &args) { // > with multiple args
-    //TODO: To complete the greater logic
+    return H_GreaterVar(args);
 }
 
 Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
@@ -442,6 +499,12 @@ Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
 
 Value Not::evalRator(const Value &rand) { // not
     //TODO: To complete the not logic
+    
+    if (rand->v_type != V_BOOL) {
+        throw(RuntimeError("Wrong typename"));
+    }
+    bool in = static_cast<Boolean*>(rand.get())->b;
+    return BooleanV(!in);
 }
 
 Value If::eval(Assoc &e) {
