@@ -81,93 +81,86 @@ Expr List::parse(Assoc &env) {
             parameters.push_back(it->parse(env));
         }
         ExprType op_type = primitives[op];
-        // Arithmetic operations
-        if (op_type == E_PLUS) {
-            if (parameters.size() == 2) {
-                return Expr(new Plus(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new PlusVar(parameters));
-            }
-        } else if (op_type == E_MINUS) {
-            if (parameters.size() == 2) {
-                return Expr(new Minus(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new MinusVar(parameters));
-            }
-        } else if (op_type == E_MUL) {
-            if (parameters.size() == 2) {
-                return Expr(new Mult(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new MultVar(parameters));
-            }
-        }  else if (op_type == E_DIV) {
-            if (parameters.size() == 2) {
-                return Expr(new Div(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new DivVar(parameters));
-            }
-        } else if (op_type == E_MODULO) {
-            if (parameters.size() != 2) {
-                throw RuntimeError("Wrong number of arguments for modulo");
-            }
-            return Expr(new Modulo(parameters[0], parameters[1]));
-        } else if (op_type == E_EXPT) {
-            if (parameters.size() != 2) {
-                throw RuntimeError("Wrong number of arguments for expt");
-            }
-            return Expr(new Expt(parameters[0], parameters[1]));
-        // Comparison operations
-        } else if (op_type == E_LT) {
-            if (parameters.size() == 2) {
-                return Expr(new Less(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new LessVar(parameters));
-            }
-        } else if (op_type == E_LE) {
-            if (parameters.size() == 2) {
-                return Expr(new LessEq(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new LessEqVar(parameters));
-            }
-        } else if (op_type == E_EQ) {
-            if (parameters.size() == 2) {
-                return Expr(new Equal(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new EqualVar(parameters));
-            }
-        } else if (op_type == E_GE) {
-            if (parameters.size() == 2) {
-                return Expr(new GreaterEq(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new GreaterEqVar(parameters));
-            }
-        } else if (op_type == E_GT) {
-            if (parameters.size() == 2) {
-                return Expr(new Greater(parameters[0], parameters[1])); 
-            } else {
-                return Expr(new GreaterVar(parameters));
-            }
-        // Logic operations
-        } else if (op_type == E_NOT) {
-            if (parameters.size() != 1) {
-                throw RuntimeError("Wrong number of arguments for not");
-            }
-            return Expr(new Not(parameters[0]));
-        } else if (op_type == E_AND) {
-            return Expr(new AndVar(parameters));
-        } else if (op_type == E_OR) {
-            return Expr(new OrVar(parameters));
-        // List operations    
-        } else if (op_type == E_LIST) {
-            return Expr(new ListFunc(parameters));
-        } else {
 
+        switch (op_type)
+        {
+            // Arithmetic operations
+            case E_PLUS:
+            return Expr(new PlusVar(parameters));
+            case E_MINUS:
+            return Expr(new MinusVar(parameters));
+            case E_MUL:
+            return Expr(new MultVar(parameters));
+            case E_DIV:
+            return Expr(new DivVar(parameters));
+            case E_MODULO:
+            return parameters.size() == 2 ? Expr(new Modulo(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_EXPT:
+            return parameters.size() == 2 ? Expr(new Expt(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for expt");
+            // Comparison operations
+            case E_LT:
+            return Expr(new LessVar(parameters));
+            case E_LE:
+            return Expr(new LessEqVar(parameters));
+            case E_EQ: 
+            return Expr(new EqualVar(parameters));
+            case E_GE: 
+            return Expr(new GreaterEqVar(parameters));
+            case E_GT: 
+            return Expr(new GreaterVar(parameters));
+            // Logic operations
+            case E_NOT:
+            return parameters.size() == 1 ? Expr(new Not(parameters[0])): throw RuntimeError("Wrong number of arguments for not");
+            case E_AND:
+            return Expr(new AndVar(parameters));
+            case E_OR:
+            return Expr(new OrVar(parameters));
+            // List operations
+            case E_CONS:
+            case E_CAR:
+            case E_CDR:
+            case E_LIST:
+            return Expr(new ListFunc(parameters));
+            // Type predicates
+            case E_EQQ:
+            case E_BOOLQ:
+            return parameters.size() == 1 ? Expr(new IsBoolean(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_INTQ:
+            return parameters.size() == 1 ? Expr(new IsFixnum(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_NULLQ:
+            return parameters.size() == 1 ? Expr(new IsNull(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_PAIRQ:
+            return parameters.size() == 1 ? Expr(new IsPair(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_PROCQ:
+            return parameters.size() == 1 ? Expr(new IsProcedure(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_SYMBOLQ:
+            return parameters.size() == 1 ? Expr(new IsSymbol(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            case E_LISTQ: break;
+            case E_STRINGQ:
+            return parameters.size() == 1 ? Expr(new IsString(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            default:
+                break;
         }
     }
 
     if (reserved_words.count(op) != 0) {
     	switch (reserved_words[op]) {
-			//TODO: TO COMPLETE THE reserve_words PARSER LOGIC
+            // Control flow constructs
+            case E_BEGIN:
+            case E_QUOTE:
+            //Conditional
+            case E_IF:
+            case E_COND:
+            // Variables and function definition
+            //case E_VAR:
+            //case E_APPLY:
+            case E_LAMBDA:
+            case E_DEFINE:
+            // Binding constructs
+            case E_LET:
+            case E_LETREC:
+            // Assignment
+            case E_SET:
         	default:
             	throw RuntimeError("Unknown reserved word: " + op);
     	}
