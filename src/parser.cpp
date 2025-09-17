@@ -103,17 +103,15 @@ Expr List::parse(Assoc &env) {
         //std::cout << "DEBUG: op is not a symbol\n";
         //return Expr(new NullExpr);
         std::vector<Expr> exprs;
-        std::transform(
-            stxs.begin() + 1, stxs.end(), std::back_inserter(exprs),
-            [&env](Syntax s) {
-                return s->parse(env);
-            }
-        );
+        std::transform(stxs.begin() + 1, stxs.end(), std::back_inserter(exprs),[&env](Syntax s) {return s->parse(env);});
         return Expr(new Apply(stxs[0]->parse(env), exprs));
     }else{
     string op = id->s;
     if (find(op, env).get() != nullptr) {
         //TODO: TO COMPLETE THE PARAMETER PARSER LOGIC
+        std::vector<Expr> exprs;
+        std::transform(stxs.begin() + 1, stxs.end(), std::back_inserter(exprs),[&env](Syntax s) {return s->parse(env);});
+        return Expr(new Apply(id->parse(env), exprs));
     }
     if (primitives.count(op) != 0) {
         vector<Expr> parameters;
@@ -185,6 +183,8 @@ Expr List::parse(Assoc &env) {
             case E_STRINGQ:
             return parameters.size() == 1 ? Expr(new IsString(parameters[0])): throw RuntimeError("Wrong number of arguments for string?");
             // Special values and control
+            case E_VOID:
+            return parameters.size() == 0 ? Expr(new MakeVoid()): throw RuntimeError("Wrong number of arguments for void");
             case E_EXIT:
             return parameters.size() == 0 ? Expr(new Exit()): throw RuntimeError("Wrong number of arguments for exit");
             default:
@@ -207,31 +207,76 @@ Expr List::parse(Assoc &env) {
             case E_IF:
             return stxs.size() == 4 ? Expr(new If(stxs[1]->parse(env), stxs[2]->parse(env), stxs[3]->parse(env))) : throw RuntimeError("Wrong number of arguments for if");
             case E_COND:
+            break;
             // Variables and function definition
-            //case E_VAR:
-            //case E_APPLY:
             case E_LAMBDA:
             {
                 if (stxs.size() != 3) throw(RuntimeError("Wrong number of arguments for lambda"));
                 std::vector<string> paras;
-                auto s = stxs[1];
-                auto symbolsList = dynamic_cast<List*>(s.get());
-                if (symbolsList == nullptr) throw(RuntimeError("lambda take a list as the 1st parameter"));
+                auto symbolsList = dynamic_cast<List*>(stxs[1].get());
+                if (symbolsList == nullptr) throw(RuntimeError("lambda takes a list as the 1st parameter"));
                 auto symbols = symbolsList->stxs;
-
-                std::transform(
-                    symbols.begin(), symbols.end(), std::back_inserter(paras),
-                    [&env](Syntax x) {
-                        auto y = dynamic_cast<SymbolSyntax*>(x.get());
-                        return y->s;
-                    }
-                );
-
+                std::transform(symbols.begin(), symbols.end(), std::back_inserter(paras),[&env](Syntax x) {
+                    auto y = dynamic_cast<SymbolSyntax*>(x.get()); 
+                    if (y == nullptr) throw(RuntimeError("lambda parameter is not symbol"));
+                    return y->s;
+                });
                 return Expr(new Lambda(paras, stxs[2]->parse(env)));
             }
             case E_DEFINE:
+            {
+                if (stxs.size() != 3) throw(RuntimeError("Wrong number of arguments for define"));
+                auto symbol = dynamic_cast<SymbolSyntax*>(stxs[1].get());
+                // call Define
+                if (symbol != nullptr) {
+                    std::string variable = symbol->s;
+                    if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+                    return Expr(new Define(variable, stxs[2]->parse(env)));
+                }
+                // call Define_f
+                auto symbolsList = dynamic_cast<List*>(stxs[1].get());
+                if (symbolsList == nullptr) throw(RuntimeError("define takes a symbol or list as the 1st parameter"));
+                auto symbols = symbolsList->stxs;
+
+                auto function_name = dynamic_cast<SymbolSyntax*>(symbols[0].get());
+                if (function_name == nullptr) throw(RuntimeError("lambda name is not symbol"));
+                std::string variable = function_name->s;
+                //if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+
+                std::vector<string> paras;
+                std::transform(symbols.begin() + 1, symbols.end(), std::back_inserter(paras),[&env](Syntax x) {
+                    auto y = dynamic_cast<SymbolSyntax*>(x.get()); 
+                    if (y == nullptr) throw(RuntimeError("lambda parameter is not symbol"));
+                    return y->s;
+                });
+                Expr body = stxs[2]->parse(env);
+                return Expr(new Define_f(variable, paras, body));
+            }
             // Binding constructs
             case E_LET:
+            {
+                if (stxs.size() != 3) throw(RuntimeError("Wrong number of arguments for let"));
+                auto pairList = dynamic_cast<List*>(stxs[1].get());
+                if (pairList == nullptr) throw(RuntimeError("let takes a list as the 1st parameter"));
+                auto pairs = pairList->stxs;
+
+                std::vector<pair<string, Expr>> result;
+                std::transform(pairs.begin(), pairs.end(), std::back_inserter(result),[&env](Syntax x) {
+                    auto y = dynamic_cast<List*>(x.get()); 
+                    if (y != nullptr) {
+                        auto s = y->stxs;
+                        if (s.size() == 2) {
+                            auto s1 = dynamic_cast<SymbolSyntax*>(s[0].get());
+                            auto s2 = s[1];
+                            if (s1 != nullptr) {
+                                return std::make_pair(s1->s, s2->parse(env));
+                            }
+                        }
+                    }
+                    throw(RuntimeError("Wrong form of arguments for let"));
+                });
+                return Expr(new Let(result, stxs[2]->parse(env)));
+            }
             case E_LETREC:
             // Assignment
             case E_SET:
@@ -242,6 +287,9 @@ Expr List::parse(Assoc &env) {
 
     //default: use Apply to be an expression
     //TODO: TO COMPLETE THE PARSER LOGIC
+    std::vector<Expr> exprs;
+    std::transform(stxs.begin() + 1, stxs.end(), std::back_inserter(exprs),[&env](Syntax s) {return s->parse(env);});
+    return Expr(new Apply(new Var(id->s), exprs));
 }
 }
 

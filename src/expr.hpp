@@ -410,6 +410,14 @@ struct Define : ExprBase {
     virtual Value eval(Assoc &) override;
 };
 
+struct Define_f : ExprBase {
+    std::string var;
+    std::vector<std::string> x;
+    Expr e;
+    Define_f(const std::string &, std::vector<std::string>&, const Expr &);
+    virtual Value eval(Assoc &) override;
+};
+
 // ================================================================================
 //                             BINDING CONSTRUCTS
 // ================================================================================

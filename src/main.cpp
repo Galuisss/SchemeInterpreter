@@ -62,9 +62,11 @@ void REPL(){
             */
 
             Value val = expr -> eval(global_env);
+            if (val.ptr == nullptr)
+                continue;
             if (val -> v_type == V_TERMINATE)
                 break;
-            val -> show(std :: cout); // value print
+            val.show(std :: cout); // value print
         }
         catch (const RuntimeError &RE){
             std :: cout << "DEBUG: " << RE.message() << std::endl;

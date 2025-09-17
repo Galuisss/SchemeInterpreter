@@ -169,6 +169,8 @@ Lambda::Lambda(const vector<string> &vec, const Expr &expr) : ExprBase(E_LAMBDA)
 
 Define::Define(const string &variable, const Expr &expr) : ExprBase(E_DEFINE), var(variable), e(expr) {}
 
+Define_f::Define_f(const string &variable, vector<string>& vec, const Expr &expr) : ExprBase(E_DEFINE), var(variable), x(vec), e(expr) {}
+
 //BINDING CONSTRUCTS
 
 Let::Let(const vector<pair<string, Expr>> &vec, const Expr &e) : ExprBase(E_LET), bind(vec), body(e) {}

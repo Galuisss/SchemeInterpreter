@@ -39,7 +39,7 @@ ValueBase* Value::get() const {
 }
 
 void Value::show(std::ostream &os) {
-    ptr->show(os);
+    if (ptr) ptr->show(os);
 }
 
 // ============================================================================

@@ -614,10 +614,25 @@ Value Apply::eval(Assoc &e) {
 
 Value Define::eval(Assoc &env) {
     //TODO: To complete the define logic
+    env = extend(var, e->eval(env), env);
+    return Value(nullptr);
+}
+
+Value Define_f::eval(Assoc &env) {
+    env = extend(var, VoidV(), env);
+    env->v = ProcedureV(x, e, env);
+    return Value(nullptr);
 }
 
 Value Let::eval(Assoc &env) {
     //TODO: To complete the let logic
+    Assoc param_env = env;
+    
+    for (auto b : bind) {
+        param_env = extend(b.first, b.second->eval(env), param_env);
+    }
+
+    return body->eval(param_env);
 }
 
 Value Letrec::eval(Assoc &env) {
