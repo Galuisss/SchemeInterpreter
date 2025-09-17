@@ -88,7 +88,8 @@ enum ExprType {
     E_COND,            
 
     // Variables and function definition
-    E_VAR,              
+    E_VAR,
+    E_SLIST,              
     E_APPLY,           
     E_LAMBDA,         
     E_DEFINE,          
@@ -123,7 +124,8 @@ enum ValueType {
     V_PROC,             
     V_VOID,            
     V_TERMINATE,
-    V_S        
+    V_PRIMITIVE,
+    V_SPECIALFORM        
 };
 
 #endif // DEF_HPP

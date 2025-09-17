@@ -83,32 +83,193 @@ Value Var::eval(Assoc &e) { // evaluation of variable
     Value matched_value = find(x, e);
     if (matched_value.get() == nullptr) {
         if (primitives.count(x)) {
-            Expr exp = nullptr;
-            switch (primitives[x]) {
-                case E_PLUS: { exp = (new Plus(new Var("parm1"), new Var("parm2"))); break; }
-                case E_MODULO: { exp = (new Modulo(new Var("parm1"), new Var("parm2"))); break; }
-                case E_VOID: { exp = (new MakeVoid()); break; }
-                case E_EQQ: { exp = (new IsEq(new Var("parm1"), new Var("parm2"))); break; }
-                case E_BOOLQ: { exp = (new IsBoolean(new Var("parm"))); break; }
-                case E_INTQ: { exp = (new IsFixnum(new Var("parm"))); break; }
-                case E_NULLQ: { exp = (new IsNull(new Var("parm"))); break; }
-                case E_PAIRQ: { exp = (new IsPair(new Var("parm"))); break; }
-                case E_PROCQ: { exp = (new IsProcedure(new Var("parm"))); break; }
-                case E_SYMBOLQ: { exp = (new IsSymbol(new Var("parm"))); break; }
-                case E_STRINGQ: { exp = (new IsString(new Var("parm"))); break; }
-                case E_EXPT: { exp = (new Expt(new Var("parm1"), new Var("parm2"))); break; }
-                case E_DISPLAY: { exp = (new Display(new Var("parm"))); break; }
-                case E_EXIT: { exp = (new Exit()); break; }
-            }
-            std::vector<std::string> parameters_;
-            //TODO: to PASS THE parameters_ correctly;
-            //COMPLETE THE CODE WITH THE HINT
-            return ProcedureV(parameters_, exp, e);
-        } else {
+            return PrimitiveV(primitives[x]);
+        }
+        else if (reserved_words.count(x)) {
+            return SpecialFormV(reserved_words[x]);
+        }
+        else {
             throw(RuntimeError("undefined variable"));
         }
     }
     return matched_value;
+}
+
+Value SList::eval(Assoc &e) {
+    Value p = terms[0]->eval(e);
+    if (p->v_type == V_PROC) {
+        Procedure* clos_ptr = static_cast<Procedure*>(p.get());
+        std::vector<Value> args;
+        std::transform(
+            terms.begin() + 1, terms.end(), std::back_inserter(args),
+            [&e](Expr x){
+                return x->eval(e);
+            }
+        );
+        return (Expr(new Apply(p, args)))->eval(e);
+    } else if (p->v_type == V_PRIMITIVE) {
+        auto op = static_cast<Primitive*>(p.get());
+        auto rand = std::vector<Expr>(terms.begin() + 1, terms.end());
+        switch (op->type)
+        {
+            case E_PLUS:
+            return Expr(new PlusVar(rand))->eval(e);
+            case E_MINUS:
+            return rand.size() >= 1 ? Expr(new MinusVar(rand))->eval(e): throw RuntimeError("Wrong number of arguments for -");
+            case E_MUL:
+            return Expr(new MultVar(rand))->eval(e);
+            case E_DIV:
+            return rand.size() >= 1 ? Expr(new DivVar(rand))->eval(e): throw RuntimeError("Wrong number of arguments for /");
+            case E_MODULO:
+            return rand.size() == 2 ? Expr(new Modulo(rand[0], rand[1]))->eval(e): throw RuntimeError("Wrong number of arguments for modulo");
+            case E_EXPT:
+            return rand.size() == 2 ? Expr(new Expt(rand[0], rand[1]))->eval(e): throw RuntimeError("Wrong number of arguments for expt");
+            // Comparison operations
+            case E_LT:
+            return Expr(new LessVar(rand))->eval(e);
+            case E_LE:
+            return Expr(new LessEqVar(rand))->eval(e);
+            case E_EQ: 
+            return Expr(new EqualVar(rand))->eval(e);
+            case E_GE: 
+            return Expr(new GreaterEqVar(rand))->eval(e);
+            case E_GT: 
+            return Expr(new GreaterVar(rand))->eval(e);
+            // Logic operations
+            case E_NOT:
+            return rand.size() == 1 ? Expr(new Not(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for not");
+            case E_AND:
+            return Expr(new AndVar(rand))->eval(e);
+            case E_OR:
+            return Expr(new OrVar(rand))->eval(e);
+            // List operations
+            case E_CONS:
+            return rand.size() == 2 ? Expr(new Cons(rand[0], rand[1]))->eval(e): throw RuntimeError("Wrong number of arguments for cons");
+            case E_CAR:
+            return rand.size() == 1 ? Expr(new Car(rand[0]))->eval(e) : throw RuntimeError("Wrong number of arguments for car");
+            case E_CDR:
+            return rand.size() == 1 ? Expr(new Cdr(rand[0]))->eval(e) : throw RuntimeError("Wrong number of arguments for cdr");
+            case E_LIST:
+            return Expr(new ListFunc(rand))->eval(e);
+            // Type predicates
+            case E_EQQ:
+            return rand.size() == 2 ? Expr(new IsEq(rand[0], rand[1]))->eval(e): throw RuntimeError("Wrong number of arguments for eq?");
+            case E_BOOLQ:
+            return rand.size() == 1 ? Expr(new IsBoolean(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for boolean?");
+            case E_INTQ:
+            return rand.size() == 1 ? Expr(new IsFixnum(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for number??");
+            case E_NULLQ:
+            return rand.size() == 1 ? Expr(new IsNull(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for null?");
+            case E_PAIRQ:
+            return rand.size() == 1 ? Expr(new IsPair(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for pair?");
+            case E_PROCQ:
+            return rand.size() == 1 ? Expr(new IsProcedure(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for procedure?");
+            case E_SYMBOLQ:
+            return rand.size() == 1 ? Expr(new IsSymbol(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for symbol?");
+            case E_LISTQ: 
+            return rand.size() == 1 ? Expr(new IsList(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for list?");
+            case E_STRINGQ:
+            return rand.size() == 1 ? Expr(new IsString(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for string?");
+            // Special values and control
+            case E_VOID:
+            return rand.size() == 0 ? Expr(new MakeVoid())->eval(e): throw RuntimeError("Wrong number of arguments for void");
+            case E_EXIT:
+            return rand.size() == 0 ? Expr(new Exit())->eval(e): throw RuntimeError("Wrong number of arguments for exit");
+            default:
+                break;
+        }
+    }
+    else if (p->v_type == V_SPECIALFORM) {
+        auto op = static_cast<SpecialForm*>(p.get());
+        auto rand = std::vector<Expr>(terms.begin() + 1, terms.end());
+        switch (op->type) { 
+            // Control flow constructs
+            case E_BEGIN:
+            return Expr(new Begin(rand))->eval(e);
+            case E_QUOTE:
+            return rand.size() == 1 ? Expr(new Quote(rand[0]))->eval(e): throw RuntimeError("Wrong number of arguments for quote");
+            //Conditional
+            case E_IF:
+            return rand.size() == 3 ? Expr(new If(rand[0], rand[1], rand[2]))->eval(e) : throw RuntimeError("Wrong number of arguments for if");
+            case E_COND:
+            break;
+            // Variables and function definition
+            case E_LAMBDA:
+            {
+                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for lambda"));
+                std::vector<std::string> paras;
+                auto symbolsList = dynamic_cast<SList*>(rand[0].get());
+                if (symbolsList == nullptr) throw(RuntimeError("lambda takes a list as the 1st parameter"));
+                auto symbols = symbolsList->terms;
+                std::transform(symbols.begin(), symbols.end(), std::back_inserter(paras),[](Expr x) {
+                    auto y = dynamic_cast<Var*>(x.get()); 
+                    if (y == nullptr) throw(RuntimeError("lambda parameter is not symbol"));
+                    return y->x;
+                });
+                return Expr(new Lambda(paras, rand[1]))->eval(e);
+            }
+            case E_DEFINE:
+            {
+                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for define"));
+                auto symbol = dynamic_cast<Var*>(rand[0].get());
+                // call Define
+                if (symbol != nullptr) {
+                    std::string variable = symbol->x;
+                    if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+                    return Expr(new Define(variable, rand[1]))->eval(e);
+                }
+                // call Define_f
+                auto symbolsList = dynamic_cast<SList*>(rand[0].get());
+                if (symbolsList == nullptr) throw(RuntimeError("define takes a symbol or list as the 1st parameter"));
+                auto symbols = symbolsList->terms;
+
+                auto function_name = dynamic_cast<Var*>(symbols[0].get());
+                if (function_name == nullptr) throw(RuntimeError("lambda name is not symbol"));
+                std::string variable = function_name->x;
+                //if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+
+                std::vector<std::string> paras;
+                std::transform(symbols.begin() + 1, symbols.end(), std::back_inserter(paras),[](Expr x) {
+                    auto y = dynamic_cast<Var*>(x.get()); 
+                    if (y == nullptr) throw(RuntimeError("lambda parameter is not symbol"));
+                    return y->x;
+                });
+                Expr body = rand[1];
+                return Expr(new Define_f(variable, paras, body))->eval(e);
+            }
+            // Binding constructs
+            case E_LET:
+            {
+                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for let"));
+                auto pairList = dynamic_cast<SList*>(rand[0].get());
+                if (pairList == nullptr) throw(RuntimeError("let takes a list as the 1st parameter"));
+                auto pairs = pairList->terms;
+
+                std::vector<std::pair<std::string, Expr>> result;
+                std::transform(pairs.begin(), pairs.end(), std::back_inserter(result),[](Expr x) {
+                    auto y = dynamic_cast<SList*>(x.get()); 
+                    if (y != nullptr) {
+                        auto s = y->terms;
+                        if (s.size() == 2) {
+                            auto s1 = dynamic_cast<Var*>(s[0].get());
+                            auto s2 = s[1];
+                            if (s1 != nullptr) {
+                                return std::make_pair(s1->x, s2);
+                            }
+                        }
+                    }
+                    throw(RuntimeError("Wrong form of arguments for let"));
+                });
+                return Expr(new Let(result, rand[1]))->eval(e);
+            }
+            case E_LETREC:
+            // Assignment
+            case E_SET:
+        	default:
+            	throw RuntimeError("Unknown reserved word: " + op->type);
+    	}
+    }
+    throw RuntimeError("Attempt to apply a non-procedure");    
 }
 
 bool isInt(const Value &v) {
@@ -585,31 +746,14 @@ Value Lambda::eval(Assoc &env) {
 }
 
 Value Apply::eval(Assoc &e) {
-    
-    auto p = rator->eval(e);
-    if (p->v_type != V_PROC) {throw RuntimeError("Attempt to apply a non-procedure");}
+    auto p = static_cast<Procedure*>(rator.get());
+    if (rand.size() != p->parameters.size()) {throw RuntimeError("Wrong number of arguments");}
 
-    //TODO: TO COMPLETE THE CLOSURE LOGIC
-    Procedure* clos_ptr = static_cast<Procedure*>(p.get());
-    
-    //TODO: TO COMPLETE THE ARGUMENT PARSER LOGIC
-    std::vector<Value> args;
-    std::transform(
-        rand.begin(), rand.end(), std::back_inserter(args),
-        [&e](Expr x){
-            return x->eval(e);
-        }
-    );
-    if (args.size() != clos_ptr->parameters.size()) {throw RuntimeError("Wrong number of arguments");}
-
-    //TODO: TO COMPLETE THE PARAMETERS' ENVIRONMENT LOGIC
-    Assoc param_env = clos_ptr->env;
-    for (int i = 0; i < args.size(); i++) {
-        param_env = extend(clos_ptr->parameters[i], args[i], param_env);
+    Assoc param_env = p->env;
+    for (int i = 0; i < rand.size(); i++) {
+        param_env = extend(p->parameters[i], rand[i], param_env);
     }
-
-    return clos_ptr->e->eval(param_env);
-    
+    return p->e->eval(param_env);
 }
 
 Value Define::eval(Assoc &env) {

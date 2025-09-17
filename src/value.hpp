@@ -10,7 +10,7 @@
  */
 
 #include "Def.hpp"
-#include "expr.hpp"
+#include "expr1.hpp"
 #include <memory>
 #include <cstring>
 #include <vector>
@@ -188,6 +188,22 @@ struct Procedure : ValueBase {
     virtual void show(std::ostream &) override;
 };
 Value ProcedureV(const std::vector<std::string> &, const Expr &, const Assoc &);
+
+struct Primitive : ValueBase {
+    ExprType type;
+    Primitive(ExprType &);
+    virtual void show(std::ostream &) override;
+};
+
+Value PrimitiveV(ExprType &);
+
+struct SpecialForm : ValueBase {
+    ExprType type;
+    SpecialForm(ExprType &);
+    virtual void show(std::ostream &) override;
+};
+
+Value SpecialFormV(ExprType &);
 
 // ============================================================================
 // Utility Functions

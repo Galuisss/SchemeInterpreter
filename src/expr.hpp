@@ -22,22 +22,9 @@ public:
 #include <memory>
 #include <cstring>
 #include <vector>
+#include "value.hpp"
+#include "expr1.hpp"
 
-struct ExprBase{
-    ExprType e_type;
-    ExprBase(ExprType);
-    virtual Value eval(Assoc &) = 0;
-    virtual ~ExprBase() = default;
-};
-
-class Expr {
-    std::shared_ptr<ExprBase> ptr;
-public:
-    Expr(ExprBase *);
-    ExprBase* operator->() const;
-    ExprBase& operator*();
-    ExprBase* get() const;
-};
 
 // ================================================================================
 //                             BASIC TYPES AND LITERALS
@@ -388,11 +375,15 @@ struct Var : ExprBase {
     Var(const std::string &);
     virtual Value eval(Assoc &) override;
 };
-
+struct SList : ExprBase {
+    std::vector<Expr> terms;
+    SList(const std::vector<Expr> t);
+    virtual Value eval(Assoc &) override;
+};
 struct Apply : ExprBase {
-    Expr rator;
-    std::vector<Expr> rand;
-    Apply(const Expr &, const std::vector<Expr> &);
+    Value rator;
+    std::vector<Value> rand;
+    Apply(const Value &, const std::vector<Value> &);
     virtual Value eval(Assoc &) override;
 };
 

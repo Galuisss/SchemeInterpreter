@@ -163,7 +163,9 @@ Cond::Cond(const std::vector<std::vector<Expr>> &cls) : ExprBase(E_COND), clause
 
 Var::Var(const string &s) : ExprBase(E_VAR), x(s) {}
 
-Apply::Apply(const Expr &expr, const vector<Expr> &vec) : ExprBase(E_APPLY), rator(expr), rand(vec) {}
+SList::SList(const std::vector<Expr> t) : ExprBase(E_SLIST), terms(t) {}
+
+Apply::Apply(const Value &expr, const vector<Value> &vec) : ExprBase(E_APPLY), rator(expr), rand(vec) {}
 
 Lambda::Lambda(const vector<string> &vec, const Expr &expr) : ExprBase(E_LAMBDA), x(vec), e(expr) {}
 

@@ -7,6 +7,7 @@
  */
 
 #include "value.hpp"
+#include "RE.hpp"
 
 // ============================================================================
 // Base ValueBase Implementation
@@ -254,6 +255,30 @@ void Procedure::show(std::ostream &os) {
 
 Value ProcedureV(const std::vector<std::string> &xs, const Expr &e, const Assoc &env) {
     return Value(new Procedure(xs, e, env));
+}
+
+// Primitive
+Primitive::Primitive(ExprType &t)
+    : ValueBase(V_PRIMITIVE), type(t) {}
+
+void Primitive::show(std::ostream &os) {
+    os << "#<procedure>";
+}
+
+Value PrimitiveV(ExprType &t) {
+    return Value(new Primitive(t));
+}
+
+// SpecialForm
+SpecialForm::SpecialForm(ExprType &t)
+    : ValueBase(V_SPECIALFORM), type(t) {}
+
+void SpecialForm::show(std::ostream &os) {
+    throw(RuntimeError("try to show a special form"));
+}
+
+Value SpecialFormV(ExprType &t) {
+    return Value(new SpecialForm(t));
 }
 
 // ============================================================================
