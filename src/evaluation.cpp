@@ -509,6 +509,13 @@ Value IsString::evalRator(const Value &rand) { // string?
 
 Value Begin::eval(Assoc &e) {
     //TODO: To complete the begin logic
+
+    auto p = es.begin(), q = es.end() - 1;
+    while (p != q) {
+        (*p)->eval(e);
+        p++;
+    }
+    return (*q)->eval(e);
 }
 
 Value Quote::eval(Assoc& e) {
@@ -535,6 +542,16 @@ Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
 
 Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     //TODO: To complete the or logic
+    if (rands.empty()) return BooleanV(false);
+
+    Value last = BooleanV(false);
+    for (const auto &ex : rands) {
+        last = ex->eval(e);
+        if (last->v_type == V_BOOL && static_cast<Boolean*>(last.get())->b) {
+            return BooleanV(true);
+        }
+    }
+    return last;
 }
 
 Value Not::evalRator(const Value &rand) { // not
@@ -549,32 +566,50 @@ Value Not::evalRator(const Value &rand) { // not
 
 Value If::eval(Assoc &e) {
     //TODO: To complete the if logic
+    Value cond_res = cond->eval(e);
+
+    if (cond_res->v_type == V_BOOL && !static_cast<Boolean*>(cond_res.get())->b) {
+        return alter->eval(e);
+    }
+    return conseq->eval(e);
 }
 
 Value Cond::eval(Assoc &env) {
     //TODO: To complete the cond logic
+
 }
 
 Value Lambda::eval(Assoc &env) { 
     //TODO: To complete the lambda logic
+    return ProcedureV(x, e, env);
 }
 
 Value Apply::eval(Assoc &e) {
-    /*
-    if (rator->eval(e)->v_type != V_PROC) {throw RuntimeError("Attempt to apply a non-procedure");}
+    
+    auto p = rator->eval(e);
+    if (p->v_type != V_PROC) {throw RuntimeError("Attempt to apply a non-procedure");}
 
     //TODO: TO COMPLETE THE CLOSURE LOGIC
-    Procedure* clos_ptr = ;
+    Procedure* clos_ptr = static_cast<Procedure*>(p.get());
     
     //TODO: TO COMPLETE THE ARGUMENT PARSER LOGIC
     std::vector<Value> args;
+    std::transform(
+        rand.begin(), rand.end(), std::back_inserter(args),
+        [&e](Expr x){
+            return x->eval(e);
+        }
+    );
     if (args.size() != clos_ptr->parameters.size()) {throw RuntimeError("Wrong number of arguments");}
 
     //TODO: TO COMPLETE THE PARAMETERS' ENVIRONMENT LOGIC
-    Assoc param_env = ;
+    Assoc param_env = clos_ptr->env;
+    for (int i = 0; i < args.size(); i++) {
+        param_env = extend(clos_ptr->parameters[i], args[i], param_env);
+    }
 
     return clos_ptr->e->eval(param_env);
-    */
+    
 }
 
 Value Define::eval(Assoc &env) {

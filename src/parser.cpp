@@ -16,6 +16,7 @@
 #include <string>
 #include <iostream>
 #include <numeric>
+#include <algorithm>
 
 #define mp make_pair
 using std::string;
@@ -88,6 +89,7 @@ Expr FalseSyntax::q_parse() {
 
 Expr List::parse(Assoc &env) {
     if (stxs.empty()) {
+        //std::cout << "DEBUG: stxs is empty\n";
         return Expr(new Quote(Expr(new NullExpr())));
     }
 
@@ -98,7 +100,16 @@ Expr List::parse(Assoc &env) {
     
     if (id == nullptr) {
         //TODO: TO COMPLETE THE LOGIC
-        throw(RuntimeError("No input"));
+        //std::cout << "DEBUG: op is not a symbol\n";
+        //return Expr(new NullExpr);
+        std::vector<Expr> exprs;
+        std::transform(
+            stxs.begin() + 1, stxs.end(), std::back_inserter(exprs),
+            [&env](Syntax s) {
+                return s->parse(env);
+            }
+        );
+        return Expr(new Apply(stxs[0]->parse(env), exprs));
     }else{
     string op = id->s;
     if (find(op, env).get() != nullptr) {
@@ -156,6 +167,7 @@ Expr List::parse(Assoc &env) {
             return Expr(new ListFunc(parameters));
             // Type predicates
             case E_EQQ:
+            return parameters.size() == 2 ? Expr(new IsEq(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for eq?");
             case E_BOOLQ:
             return parameters.size() == 1 ? Expr(new IsBoolean(parameters[0])): throw RuntimeError("Wrong number of arguments for boolean?");
             case E_INTQ:
@@ -172,6 +184,9 @@ Expr List::parse(Assoc &env) {
             return parameters.size() == 1 ? Expr(new IsList(parameters[0])): throw RuntimeError("Wrong number of arguments for list?");
             case E_STRINGQ:
             return parameters.size() == 1 ? Expr(new IsString(parameters[0])): throw RuntimeError("Wrong number of arguments for string?");
+            // Special values and control
+            case E_EXIT:
+            return parameters.size() == 0 ? Expr(new Exit()): throw RuntimeError("Wrong number of arguments for exit");
             default:
                 break;
         }
@@ -181,16 +196,39 @@ Expr List::parse(Assoc &env) {
     	switch (reserved_words[op]) { 
             // Control flow constructs
             case E_BEGIN:
-            break;
+            {
+            std::vector<Expr> exprs;
+            std::transform(stxs.begin() + 1, stxs.end(), std::back_inserter(exprs), [&env](const Syntax &s){return s->parse(env);});
+            return Expr(new Begin(exprs));
+            }
             case E_QUOTE:
             return stxs.size() == 2 ? Expr(new Quote(stxs[1]->q_parse())): throw RuntimeError("Wrong number of arguments for quote");
             //Conditional
             case E_IF:
+            return stxs.size() == 4 ? Expr(new If(stxs[1]->parse(env), stxs[2]->parse(env), stxs[3]->parse(env))) : throw RuntimeError("Wrong number of arguments for if");
             case E_COND:
             // Variables and function definition
             //case E_VAR:
             //case E_APPLY:
             case E_LAMBDA:
+            {
+                if (stxs.size() != 3) throw(RuntimeError("Wrong number of arguments for lambda"));
+                std::vector<string> paras;
+                auto s = stxs[1];
+                auto symbolsList = dynamic_cast<List*>(s.get());
+                if (symbolsList == nullptr) throw(RuntimeError("lambda take a list as the 1st parameter"));
+                auto symbols = symbolsList->stxs;
+
+                std::transform(
+                    symbols.begin(), symbols.end(), std::back_inserter(paras),
+                    [&env](Syntax x) {
+                        auto y = dynamic_cast<SymbolSyntax*>(x.get());
+                        return y->s;
+                    }
+                );
+
+                return Expr(new Lambda(paras, stxs[2]->parse(env)));
+            }
             case E_DEFINE:
             // Binding constructs
             case E_LET:
@@ -212,7 +250,7 @@ Expr List::q_parse() {
 
     if (stxs.size() >= 3) {
         auto s = *(stxs.rbegin() + 1);
-        auto ss = static_cast<SymbolSyntax*>(s.get());
+        auto ss = dynamic_cast<SymbolSyntax*>(s.get());
         if (ss != nullptr && ss->s == ".") {
             Expr ex = (*stxs.rbegin())->q_parse();
             return std::accumulate(

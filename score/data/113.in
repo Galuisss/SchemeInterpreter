@@ -1,2 +1,0 @@
-(let ((foo (lambda (lambda) (lambda))))
-  (let ((lambda foo) (bar (lambda () #t))) (foo bar)))

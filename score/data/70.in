@@ -1,1 +1,0 @@
-(letrec () (begin (boolean? #f) 9))

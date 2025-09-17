@@ -1,1 +1,0 @@
-(letrec () (begin (pair? (cons 1 (quote ()))) 20))

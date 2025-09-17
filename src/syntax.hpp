@@ -80,5 +80,5 @@ struct List : SyntaxBase {
 
 Syntax readSyntax(std::istream &);
 
-std::istream &operator>>(std::istream &, Syntax);
+std::istream &operator>>(std::istream &, Syntax &);
 #endif
