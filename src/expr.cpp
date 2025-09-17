@@ -8,7 +8,7 @@ using std::string;
 using std::pair;
 
 // 辅助函数：计算最大公约数
-int gcd(int a, int b) {
+static int gcd(int a, int b) {
     while (b != 0) {
         int temp = b;
         b = a % b;
@@ -19,16 +19,77 @@ int gcd(int a, int b) {
 
 ExprBase::ExprBase(ExprType et) : e_type(et) {}
 
+void ExprBase::showCdr(std::ostream &os) const {
+    os << " . ";
+    show(os);
+    os << ')';
+}
+
+
 Expr::Expr(ExprBase * eb) : ptr(eb) {}
 ExprBase* Expr::operator->() const { return ptr.get(); }
 ExprBase& Expr::operator*() { return *ptr; }
 ExprBase* Expr::get() const { return ptr.get(); }
 
+void Expr::show(std::ostream &os) const { 
+    //std::cout << "DEBUG: Expr::show called" << std::endl;
+    this->ptr->show(os);
+}
+
+AssocList::AssocList(const std::string &x, const Expr &v, Assoc &next)
+    : x(x), v(v), next(next) {}
+
+Assoc::Assoc(AssocList *x) : ptr(x) {}
+
+AssocList* Assoc::operator->() const { 
+    return ptr.get(); 
+}
+
+AssocList& Assoc::operator*() { 
+    return *ptr; 
+}
+
+AssocList* Assoc::get() const { 
+    return ptr.get(); 
+}
+
+Assoc empty() {
+    return Assoc(nullptr);
+}
+
+Assoc extend(const std::string &x, const Expr &v, Assoc &lst) {
+    return Assoc(new AssocList(x, v, lst));
+}
+
+void modify(const std::string &x, const Expr &v, Assoc &lst) {
+    for (auto i = lst; i.get() != nullptr; i = i->next) {
+        if (x == i->x) {
+            i->v = v;
+            return;
+        }
+    }
+}
+
+Expr find(const std::string &x, Assoc &l) {
+    for (auto i = l; i.get() != nullptr; i = i->next) {
+        if (x == i->x) {
+            return i->v;
+        }
+    }
+    return Expr(nullptr);
+}
+
 //BASIC TYPES AND LITERALS
 
-Fixnum::Fixnum(int x) : ExprBase(E_FIXNUM), n(x) {}
+self_evaluating::self_evaluating(ExprType et) : ExprBase(et) {}
 
-RationalNum::RationalNum(int num, int den) : ExprBase(E_RATIONAL), numerator(num), denominator(den) {
+Fixnum::Fixnum(int x) : self_evaluating(E_FIXNUM), n(x) {}
+
+Expr Fixnum::eval(Assoc &) {
+    return FixnumE(n);
+}
+
+RationalNum::RationalNum(int num, int den) : self_evaluating(E_RATIONAL), numerator(num), denominator(den) {
     // 简化分数
     int g = gcd(abs(numerator), abs(denominator));
     numerator /= g;
@@ -41,17 +102,79 @@ RationalNum::RationalNum(int num, int den) : ExprBase(E_RATIONAL), numerator(num
     }
 }
 
-StringExpr::StringExpr(const std::string &str) : ExprBase(E_STRING), s(str) {}
+RationalNum::RationalNum(const Fixnum &a) : self_evaluating(E_RATIONAL), numerator(a.n), denominator(1) {}
 
-True::True() : ExprBase(E_TRUE) {}
+Expr RationalNum::eval(Assoc &) {
+    return RationalNumE(numerator, denominator);
+}
 
-False::False() : ExprBase(E_FALSE) {}
+StringExpr::StringExpr(const std::string &str) : self_evaluating(E_STRING), s(str) {}
 
-MakeVoid::MakeVoid() : ExprBase(E_VOID) {}
+Expr StringExpr::eval(Assoc &) {
+    return StringExprE(s);
+}
 
-Exit::Exit() : ExprBase(E_EXIT) {}
+Boolean::Boolean(const bool &b) : self_evaluating(E_BOOLEAN), b(b) {}
 
-NullExpr::NullExpr() : ExprBase(E_NULL) {}
+Expr Boolean::eval(Assoc &) {
+    return BooleanE(b);
+}
+
+True::True() : self_evaluating(E_TRUE) {}
+
+Expr True::eval(Assoc &) {
+    return TrueE();
+}
+
+False::False() : self_evaluating(E_FALSE) {}
+
+Expr False::eval(Assoc &) {
+    return FalseE();
+}
+
+MakeVoid::MakeVoid() : self_evaluating(E_VOID) {}
+
+Expr MakeVoid::eval(Assoc &) {
+    return MakeVoidE();
+}
+
+Exit::Exit() : self_evaluating(E_EXIT) {}
+
+Expr Exit::eval(Assoc &) {
+    return ExitE();
+}
+
+NullExpr::NullExpr() : self_evaluating(E_NULL) {}
+
+Expr NullExpr::eval(Assoc &) {
+    return NullExprE();
+}
+
+Pair::Pair(const Expr &car, const Expr &cdr) : self_evaluating(E_PAIR), car(car), cdr(cdr) {}
+
+Expr Pair::eval(Assoc &) {
+    return PairE(car, cdr);
+}
+
+Procedure::Procedure(const std::vector<std::string> &vec, const Expr &e, const Assoc &env) : self_evaluating(E_PROC), parameters(vec), e(e), env(env) {}
+
+Expr Procedure::eval(Assoc &) {
+    return ProcedureE(parameters, e, env);
+}
+
+Terminate::Terminate() : self_evaluating(E_TERMINATE) {}
+
+Expr Terminate::eval(Assoc &) {
+    return TerminateE();
+}
+
+Expr Primitive::eval(Assoc &) {
+    return PrimitiveE(type);
+}
+
+Expr SpecialForm::eval(Assoc &) {
+    return SpecialFormE(type);
+}
 
 //BASIC ABSTRACT TYPES FOR PARAMETERS
 
@@ -165,7 +288,7 @@ Var::Var(const string &s) : ExprBase(E_VAR), x(s) {}
 
 SList::SList(const std::vector<Expr> t) : ExprBase(E_SLIST), terms(t) {}
 
-Apply::Apply(const Value &expr, const vector<Value> &vec) : ExprBase(E_APPLY), rator(expr), rand(vec) {}
+Apply::Apply(const Expr &expr, const vector<Expr> &vec) : ExprBase(E_APPLY), rator(expr), rand(vec) {}
 
 Lambda::Lambda(const vector<string> &vec, const Expr &expr) : ExprBase(E_LAMBDA), x(vec), e(expr) {}
 
@@ -173,6 +296,9 @@ Define::Define(const string &variable, const Expr &expr) : ExprBase(E_DEFINE), v
 
 Define_f::Define_f(const string &variable, vector<string>& vec, const Expr &expr) : ExprBase(E_DEFINE), var(variable), x(vec), e(expr) {}
 
+Primitive::Primitive(ExprType et) : self_evaluating(E_PRIMITIVE), type(et) {}
+
+SpecialForm::SpecialForm(ExprType et) : self_evaluating(E_SPECIALFORM), type(et) {}
 //BINDING CONSTRUCTS
 
 Let::Let(const vector<pair<string, Expr>> &vec, const Expr &e) : ExprBase(E_LET), bind(vec), body(e) {}
@@ -186,5 +312,3 @@ Set::Set(const std::string &var, const Expr &e) : ExprBase(E_SET), var(var), e(e
 //I/O OPERATIONS
 
 Display::Display(const Expr &r) : Unary(E_DISPLAY, r) {}
-
-Quoted_Symbol::Quoted_Symbol(const std::string &s) : ExprBase(E_QUOTED_SYMBOL), var(s) {}

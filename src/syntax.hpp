@@ -8,7 +8,6 @@
 
 struct SyntaxBase {
     virtual Expr parse(Assoc &) = 0;
-    virtual Expr q_parse() = 0;
     virtual void show(std::ostream &) = 0;
     virtual ~SyntaxBase() = default;
 };
@@ -20,14 +19,12 @@ struct Syntax {
     SyntaxBase& operator*();
     SyntaxBase* get() const;
     Expr parse(Assoc &);
-    Expr q_parse();
 };
 
 struct Number : SyntaxBase {
     int n;
     Number(int);
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 
@@ -36,21 +33,18 @@ struct RationalSyntax : SyntaxBase {
     int denominator;
     RationalSyntax(int num, int den);
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 
 struct TrueSyntax : SyntaxBase {
     // This will not match
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 
 struct FalseSyntax : SyntaxBase {
     // FalseSyntax();
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 
@@ -58,7 +52,6 @@ struct SymbolSyntax : SyntaxBase {
     std::string s;
     SymbolSyntax(const std::string &);
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 
@@ -66,7 +59,6 @@ struct StringSyntax : SyntaxBase {
     std::string s;
     StringSyntax(const std::string &);
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 
@@ -74,7 +66,6 @@ struct List : SyntaxBase {
     std::vector<Syntax> stxs;
     List();
     virtual Expr parse(Assoc &) override;
-    virtual Expr q_parse() override;
     virtual void show(std::ostream &) override;
 };
 

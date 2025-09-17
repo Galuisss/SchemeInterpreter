@@ -19,7 +19,6 @@
 // Forward declarations
 struct Syntax;
 struct Expr;
-struct Value;
 struct AssocList;
 struct Assoc;
 
@@ -33,12 +32,18 @@ enum ExprType {
     // Basic types and literals
     E_FIXNUM,          
     E_RATIONAL,        
-    E_STRING,         
+    E_STRING,
+    E_BOOLEAN,         
     E_TRUE,            
     E_FALSE,           
     E_VOID,          
     E_EXIT,
-    E_NULL,         
+    E_NULL,
+    E_PROC,
+    E_PAIR,
+    E_TERMINATE,
+    E_PRIMITIVE,
+    E_SPECIALFORM,            
 
     // Arithmetic operations
     E_PLUS,

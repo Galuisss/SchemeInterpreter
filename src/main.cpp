@@ -1,7 +1,6 @@
 #include "Def.hpp"
 #include "syntax.hpp"
 #include "expr.hpp"
-#include "value.hpp"
 #include "RE.hpp"
 #include <sstream>
 #include <iostream>
@@ -61,11 +60,15 @@ void REPL(){
             std::cout << std::endl;
             */
 
-            Value val = expr -> eval(global_env);
+            Expr val = expr -> eval(global_env);
             if (val.ptr == nullptr)
+            {
                 continue;
-            if (val -> v_type == V_TERMINATE)
+            }
+            if (val->e_type == E_EXIT)
+            {
                 break;
+            }
             val.show(std :: cout); // value print
         }
         catch (const RuntimeError &RE){
