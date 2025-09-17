@@ -33,15 +33,12 @@ enum ExprType {
     E_FIXNUM,          
     E_RATIONAL,        
     E_STRING,
-    E_BOOLEAN,         
-    E_TRUE,            
-    E_FALSE,           
+    E_BOOLEAN,               
     E_VOID,          
     E_EXIT,
     E_NULL,
     E_PROC,
     E_PAIR,
-    E_TERMINATE,
     E_PRIMITIVE,
     E_SPECIALFORM,            
 
@@ -108,29 +105,6 @@ enum ExprType {
 
     // I/O operations
     E_DISPLAY,
-    
-    E_QUOTED_SYMBOL,
-};
-
-/**
- * @brief Value types enumeration
- * 
- * Defines all possible value types that can be represented and manipulated
- * in the Scheme interpreter runtime.
- */
-enum ValueType {
-    V_INT,              
-    V_RATIONAL,         
-    V_BOOL,             
-    V_SYM,              
-    V_NULL,             
-    V_STRING,           
-    V_PAIR,             
-    V_PROC,             
-    V_VOID,            
-    V_TERMINATE,
-    V_PRIMITIVE,
-    V_SPECIALFORM        
 };
 
 #endif // DEF_HPP

@@ -54,11 +54,6 @@ void REPL(){
         Syntax stx = readSyntax(std :: cin); // read
         try{
             Expr expr = stx -> parse(global_env); // parse
-            /*
-            std::cout << "DEBUG: ";
-            stx -> show(std :: cout); // syntax print
-            std::cout << std::endl;
-            */
 
             Expr val = expr -> eval(global_env);
             if (val.ptr == nullptr)
@@ -72,7 +67,7 @@ void REPL(){
             val.show(std :: cout); // value print
         }
         catch (const RuntimeError &RE){
-            std :: cout << "DEBUG: " << RE.message() << std::endl;
+            //std :: cout << "DEBUG: " << RE.message() << std::endl;
             std :: cout << "RuntimeError";
         }
         puts("");

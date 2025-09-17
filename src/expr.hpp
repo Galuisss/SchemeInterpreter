@@ -89,7 +89,6 @@ struct Fixnum : self_evaluating {
     Fixnum(int);
     inline virtual void show(std::ostream &os) const override {
         os << n;
-        //std::cout << "DEBUG: Fixnum::show called 2: n = " << n << std::endl;
     };
     virtual Expr eval(Assoc &) override;
 };
@@ -140,26 +139,6 @@ struct Boolean : self_evaluating {
     virtual Expr eval(Assoc &) override;
 };
 inline Expr BooleanE(const bool &b) {return Expr(new Boolean(b));};
-struct True : self_evaluating {
-    True();
-    virtual void show(std::ostream &os) const override {
-        os << "#t";
-    };
-    virtual Expr eval(Assoc &) override;
-};
-inline Expr TrueE() {return Expr(new True());};
-/**
- * @brief Boolean false literal  
- */
-struct False : self_evaluating {
-    False();
-    virtual void show(std::ostream &os) const override {
-        os << "#f";
-    };
-    virtual Expr eval(Assoc &) override;
-};
-inline Expr FalseE() {return Expr(new False());};
-
 struct MakeVoid : self_evaluating {
     MakeVoid();
     inline virtual void show(std::ostream &os) const override {
@@ -215,15 +194,6 @@ struct Procedure : self_evaluating {
     virtual Expr eval(Assoc &) override;
 };
 inline Expr ProcedureE(const std::vector<std::string> &vec, const Expr &e, const Assoc &env) {return Expr(new Procedure(vec, e, env));};
-
-struct Terminate : self_evaluating {
-    Terminate();
-    inline virtual void show(std::ostream &os) const override {
-        os << "()";
-    };
-    virtual Expr eval(Assoc &) override;
-};
-inline Expr TerminateE() {return Expr(new Terminate());};
 
 // ================================================================================
 //                             BASIC ABSTRACT TYPES FOR PARAMETERS
@@ -571,15 +541,15 @@ inline Expr SpecialFormE(ExprType et) {return Expr(new SpecialForm(et));};
 
 struct Let : ExprBase {
     std::vector<std::pair<std::string, Expr>> bind;
-    Expr body;
-    Let(const std::vector<std::pair<std::string, Expr>> &, const Expr &);
+    std::vector<Expr> body;
+    Let(const std::vector<std::pair<std::string, Expr>> &, const std::vector<Expr> &);
     virtual Expr eval(Assoc &) override;
 };
 
 struct Letrec : ExprBase {
     std::vector<std::pair<std::string, Expr>> bind;
-    Expr body;
-    Letrec(const std::vector<std::pair<std::string, Expr>> &, const Expr &);
+    std::vector<Expr> body;
+    Letrec(const std::vector<std::pair<std::string, Expr>> &, const std::vector<Expr> &);
     virtual Expr eval(Assoc &) override;
 };
 

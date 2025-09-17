@@ -32,7 +32,6 @@ ExprBase& Expr::operator*() { return *ptr; }
 ExprBase* Expr::get() const { return ptr.get(); }
 
 void Expr::show(std::ostream &os) const { 
-    //std::cout << "DEBUG: Expr::show called" << std::endl;
     this->ptr->show(os);
 }
 
@@ -120,18 +119,6 @@ Expr Boolean::eval(Assoc &) {
     return BooleanE(b);
 }
 
-True::True() : self_evaluating(E_TRUE) {}
-
-Expr True::eval(Assoc &) {
-    return TrueE();
-}
-
-False::False() : self_evaluating(E_FALSE) {}
-
-Expr False::eval(Assoc &) {
-    return FalseE();
-}
-
 MakeVoid::MakeVoid() : self_evaluating(E_VOID) {}
 
 Expr MakeVoid::eval(Assoc &) {
@@ -160,12 +147,6 @@ Procedure::Procedure(const std::vector<std::string> &vec, const Expr &e, const A
 
 Expr Procedure::eval(Assoc &) {
     return ProcedureE(parameters, e, env);
-}
-
-Terminate::Terminate() : self_evaluating(E_TERMINATE) {}
-
-Expr Terminate::eval(Assoc &) {
-    return TerminateE();
 }
 
 Expr Primitive::eval(Assoc &) {
@@ -301,9 +282,9 @@ Primitive::Primitive(ExprType et) : self_evaluating(E_PRIMITIVE), type(et) {}
 SpecialForm::SpecialForm(ExprType et) : self_evaluating(E_SPECIALFORM), type(et) {}
 //BINDING CONSTRUCTS
 
-Let::Let(const vector<pair<string, Expr>> &vec, const Expr &e) : ExprBase(E_LET), bind(vec), body(e) {}
+Let::Let(const vector<pair<string, Expr>> &vec, const std::vector<Expr> &e) : ExprBase(E_LET), bind(vec), body(e) {}
 
-Letrec::Letrec(const vector<pair<string, Expr>> &vec, const Expr &expr) : ExprBase(E_LETREC), bind(vec), body(expr) {}
+Letrec::Letrec(const vector<pair<string, Expr>> &vec, const std::vector<Expr> &expr) : ExprBase(E_LETREC), bind(vec), body(expr) {}
 
 //ASSIGNMENT
 

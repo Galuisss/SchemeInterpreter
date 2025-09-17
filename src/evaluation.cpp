@@ -36,7 +36,6 @@ Expr Binary::eval(Assoc &e) { // evaluation of two-operators primitive
 }
 
 Expr Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
-    // TODO: TO COMPLETE THE VARIADIC CLASS
     std::vector<Expr> results;
     results.reserve(rands.size());
     std::transform(rands.begin(), rands.end(), std::back_inserter(results), [&e](const Expr &x){return x->eval(e);});
@@ -44,7 +43,6 @@ Expr Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
 }
 
 Expr Var::eval(Assoc &e) { // evaluation of variable
-    // TODO: TO identify the invalid variable
     // We request all valid variable just need to be a Var,you should promise:
     //The first character of a variable name cannot be a digit or any character from the set: {.@}
     //If a string can be recognized as a number, it will be prioritized as a number. For example: 1, -1, +123, .123, +124., 1e-3
@@ -149,6 +147,16 @@ Expr SList::eval(Assoc &e) {
             return rand.size() == 1 ? Expr(new Cdr(rand[0]))->eval(e) : throw RuntimeError("Wrong number of arguments for cdr");
             case E_LIST:
             return Expr(new ListFunc(rand))->eval(e);
+            case E_SETCAR:
+            {
+                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for set-car!"));
+                return Expr(new SetCar(rand[0], rand[1]))->eval(e);
+            }
+            case E_SETCDR:
+            {
+                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for set-cdr!"));
+                return Expr(new SetCdr(rand[0], rand[1]))->eval(e);
+            }
             // Type predicates
             case E_EQQ:
             return rand.size() == 2 ? Expr(new IsEq(rand[0], rand[1]))->eval(e): throw RuntimeError("Wrong number of arguments for eq?");
@@ -196,7 +204,7 @@ Expr SList::eval(Assoc &e) {
             // Variables and function definition
             case E_LAMBDA:
             {
-                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for lambda"));
+                if (rand.size() < 2) throw(RuntimeError("Wrong number of arguments for lambda"));
                 std::vector<std::string> paras;
                 auto VarsList = dynamic_cast<SList*>(rand[0].get());
                 if (VarsList == nullptr) throw(RuntimeError("lambda takes a list as the 1st parameter"));
@@ -206,7 +214,8 @@ Expr SList::eval(Assoc &e) {
                     if (y == nullptr) throw(RuntimeError("lambda parameter is not Var"));
                     return y->x;
                 });
-                return Expr(new Lambda(paras, rand[1]))->eval(e);
+                auto res = std::vector<Expr>(rand.begin() + 1, rand.end());
+                return Expr(new Lambda(paras, Expr(new Begin(res))))->eval(e);
             }
             case E_DEFINE:
             {
@@ -240,7 +249,7 @@ Expr SList::eval(Assoc &e) {
             // Binding constructs
             case E_LET:
             {
-                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for let"));
+                if (rand.size() < 2) throw(RuntimeError("Wrong number of arguments for let"));
                 auto pairList = dynamic_cast<SList*>(rand[0].get());
                 if (pairList == nullptr) throw(RuntimeError("let takes a list as the 1st parameter"));
                 auto pairs = pairList->terms;
@@ -260,11 +269,47 @@ Expr SList::eval(Assoc &e) {
                     }
                     throw(RuntimeError("Wrong form of arguments for let"));
                 });
-                return Expr(new Let(result, rand[1]))->eval(e);
+
+                auto res = std::vector<Expr>(rand.begin() + 1, rand.end());
+                return Expr(new Let(result, res))->eval(e);
             }
             case E_LETREC:
+            {
+                if (rand.size() < 2) throw(RuntimeError("Wrong number of arguments for letrec"));
+                auto pairList = dynamic_cast<SList*>(rand[0].get());
+                if (pairList == nullptr) throw(RuntimeError("let takes a list as the 1st parameter"));
+                auto pairs = pairList->terms;
+
+                std::vector<std::pair<std::string, Expr>> result;
+                std::transform(pairs.begin(), pairs.end(), std::back_inserter(result),[](Expr x) {
+                    auto y = dynamic_cast<SList*>(x.get()); 
+                    if (y != nullptr) {
+                        auto s = y->terms;
+                        if (s.size() == 2) {
+                            auto s1 = dynamic_cast<Var*>(s[0].get());
+                            auto s2 = s[1];
+                            if (s1 != nullptr) {
+                                return std::make_pair(s1->x, s2);
+                            }
+                        }
+                    }
+                    throw(RuntimeError("Wrong form of arguments for letrec"));
+                });
+                auto res = std::vector<Expr>(rand.begin() + 1, rand.end());
+                return Expr(new Letrec(result, res))->eval(e);
+            }
             // Assignment
             case E_SET:
+            {
+                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for set!"));
+                auto var = dynamic_cast<Var*>(rand[0].get());
+                // call Define
+                if (var != nullptr) {
+                    std::string variable = var->x;
+                    if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+                    return Expr(new Set(variable, rand[1]))->eval(e);
+                }
+            }
         	default:
             	throw RuntimeError("Unknown reserved word: " + op->type);
     	}
@@ -313,12 +358,10 @@ Expr H_Plus(const Expr &rand1, const Expr &rand2) {
 }
 
 Expr Plus::evalRator(const Expr &rand1, const Expr &rand2) { // +
-    //TODO: To complete the addition logic
     return H_Plus(rand1, rand2);
 }
 
 Expr H_Minus(const Expr &rand1, const Expr &rand2) { // -
-    //TODO: To complete the substraction logic
     if (isNum(rand1) && isNum(rand2)) {
         RationalNum addend1 = toRational(rand1);
         RationalNum addend2 = toRational(rand2);
@@ -341,7 +384,6 @@ Expr Minus::evalRator(const Expr &rand1, const Expr &rand2) { // -
 }
 
 Expr H_Mult(const Expr &rand1, const Expr &rand2) { // *
-    //TODO: To complete the Multiplication logic
     if (isNum(rand1) && isNum(rand2)) {
         RationalNum addend1 = toRational(rand1);
         RationalNum addend2 = toRational(rand2);
@@ -360,12 +402,10 @@ Expr H_Mult(const Expr &rand1, const Expr &rand2) { // *
 }
 
 Expr Mult::evalRator(const Expr &rand1, const Expr &rand2) { // *
-    //TODO: To complete the Multiplication logic
     return H_Mult(rand1, rand2);
 }
 
 Expr H_Div(const Expr &rand1, const Expr &rand2) { // /
-    //TODO: To complete the dicision logic
     if (isNum(rand1) && isNum(rand2)) {
         RationalNum addend1 = toRational(rand1);
         RationalNum addend2 = toRational(rand2);
@@ -571,12 +611,10 @@ Expr GreaterVar::evalRator(const std::vector<Expr> &args) { // > with multiple a
 }
 
 Expr Cons::evalRator(const Expr &rand1, const Expr &rand2) { // cons
-    //TODO: To complete the cons logic
     return PairE(rand1, rand2);
 }
 
 Expr ListFunc::evalRator(const std::vector<Expr> &args) { // list function
-    //TODO: To complete the list logic
     return std::accumulate(
         args.rbegin(), args.rend(), NullExprE(),
         [](Expr tail, const Expr& x) {
@@ -590,12 +628,10 @@ bool H_IsList(const Expr &rand) {
 }
 
 Expr IsList::evalRator(const Expr &rand) { // list?
-    //TODO: To complete the list? logic
     return BooleanE(H_IsList(rand));
 }
 
 Expr Car::evalRator(const Expr &rand) { // car
-    //TODO: To complete the car logic
     if (rand->e_type != E_PAIR) {
         throw(RuntimeError("Wrong typename"));
     }
@@ -603,19 +639,28 @@ Expr Car::evalRator(const Expr &rand) { // car
 }
 
 Expr Cdr::evalRator(const Expr &rand) { // cdr
-    //TODO: To complete the cdr logic
-        if (rand->e_type != E_PAIR) {
+    if (rand->e_type != E_PAIR) {
         throw(RuntimeError("Wrong typename"));
     }
     return static_cast<Pair*>(rand.get())->cdr;
 }
 
 Expr SetCar::evalRator(const Expr &rand1, const Expr &rand2) { // set-car!
-    //TODO: To complete the set-car! logic
+    if (rand1->e_type != E_PAIR) {
+        throw(RuntimeError("Wrong form of arguments for set-car!"));
+    }
+    auto p = static_cast<Pair*>(rand1.get());
+    p->car = rand2;
+    return Expr(nullptr);
 }
 
 Expr SetCdr::evalRator(const Expr &rand1, const Expr &rand2) { // set-cdr!
-   //TODO: To complete the set-cdr! logic
+    if (rand1->e_type != E_PAIR) {
+        throw(RuntimeError("Wrong form of arguments for set-cdr!"));
+    }
+    auto p = static_cast<Pair*>(rand1.get());
+    p->cdr = rand2;
+    return Expr(nullptr);
 }
 
 Expr IsEq::evalRator(const Expr &rand1, const Expr &rand2) { // eq?
@@ -669,8 +714,6 @@ Expr IsString::evalRator(const Expr &rand) { // string?
 }
 
 Expr Begin::eval(Assoc &e) {
-    //TODO: To complete the begin logic
-
     auto p = es.begin(), q = es.end() - 1;
     while (p != q) {
         (*p)->eval(e);
@@ -680,7 +723,6 @@ Expr Begin::eval(Assoc &e) {
 }
 
 Expr Quote::eval(Assoc& e) {
-    //TODO: To complete the quote logic
     return ex->eval(e);
 }
 
@@ -702,7 +744,6 @@ Expr AndVar::eval(Assoc &e) { // and with short-circuit evaluation
 }
 
 Expr OrVar::eval(Assoc &e) { // or with short-circuit evaluation
-    //TODO: To complete the or logic
     if (rands.empty()) return BooleanE(false);
 
     Expr last = BooleanE(false);
@@ -716,8 +757,6 @@ Expr OrVar::eval(Assoc &e) { // or with short-circuit evaluation
 }
 
 Expr Not::evalRator(const Expr &rand) { // not
-    //TODO: To complete the not logic
-    
     if (rand->e_type != E_BOOLEAN) {
         throw(RuntimeError("Wrong typename"));
     }
@@ -726,9 +765,7 @@ Expr Not::evalRator(const Expr &rand) { // not
 }
 
 Expr If::eval(Assoc &e) {
-    //TODO: To complete the if logic
     Expr cond_res = cond->eval(e);
-
     if (cond_res->e_type == E_BOOLEAN && !static_cast<Boolean*>(cond_res.get())->b) {
         return alter->eval(e);
     }
@@ -736,12 +773,43 @@ Expr If::eval(Assoc &e) {
 }
 
 Expr Cond::eval(Assoc &env) {
-    //TODO: To complete the cond logic
+    auto p = clauses.begin();
+    auto q = clauses.end() - 1;
+    while (p != q) {
+        auto list = *p;
+        int size = list.size();
+        if (size < 2) throw(RuntimeError("Wrong number of arguments for cond"));
 
+        Expr cond_res = list[0]->eval(env);
+        if (!(cond_res->e_type == E_BOOLEAN && !static_cast<Boolean*>(cond_res.get())->b)) {
+            auto res = std::vector<Expr>(list.begin() + 1, list.end());
+            return Expr(new Begin(res))->eval(env);
+        }
+        p++;
+    }
+
+    auto list = *p;
+    int size = list.size();
+    if (size < 2) throw(RuntimeError("Wrong number of arguments for cond"));
+
+    if (list[0]->e_type == E_VAR) {
+        auto v = static_cast<Var*>(list[0].get());
+        if (find(v->x, env).get() == nullptr && v->x == "else") {
+            auto res = std::vector<Expr>(list.begin() + 1, list.end());
+            return Expr(new Begin(res))->eval(env);
+        }
+    }
+
+    Expr cond_res = list[0]->eval(env);
+    if (!(cond_res->e_type == E_BOOLEAN && !static_cast<Boolean*>(cond_res.get())->b)) {
+        auto res = std::vector<Expr>(list.begin() + 1, list.end());
+        return Expr(new Begin(res))->eval(env);
+    }
+
+    return Expr(nullptr);
 }
 
 Expr Lambda::eval(Assoc &env) { 
-    //TODO: To complete the lambda logic
     return ProcedureE(x, e, env);
 }
 
@@ -757,34 +825,38 @@ Expr Apply::eval(Assoc &e) {
 }
 
 Expr Define::eval(Assoc &env) {
-    //TODO: To complete the define logic
     env = extend(var, e->eval(env), env);
     return Expr(nullptr);
 }
 
 Expr Define_f::eval(Assoc &env) {
-    env = extend(var, MakeVoidE(), env);
+    env = extend(var, Expr(nullptr), env);
     env->v = ProcedureE(x, e, env);
     return Expr(nullptr);
 }
 
 Expr Let::eval(Assoc &env) {
-    //TODO: To complete the let logic
     Assoc param_env = env;
-    
     for (auto b : bind) {
         param_env = extend(b.first, b.second->eval(env), param_env);
     }
-
-    return body->eval(param_env);
+    return Expr(new Begin(body))->eval(param_env);
 }
 
 Expr Letrec::eval(Assoc &env) {
-    //TODO: To complete the letrec logic
+    Assoc param_env = env;
+    for (auto b : bind) {
+        param_env = extend(b.first, Expr(nullptr), param_env);
+    }
+    for (auto b : bind) {
+        modify(b.first, (b.second)->eval(param_env), param_env);
+    }
+    return Expr(new Begin(body))->eval(param_env);
 }
 
 Expr Set::eval(Assoc &env) {
-    //TODO: To complete the set logic
+    modify(var, e->eval(env), env);
+    return Expr(nullptr);
 }
 
 Expr Display::evalRator(const Expr &rand) { // display function

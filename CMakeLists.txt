@@ -15,7 +15,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/RE.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/expr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/value.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/evaluation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Def.cpp
 )
