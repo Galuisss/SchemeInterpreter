@@ -51,6 +51,10 @@ Value Exit::eval(Assoc &e) { // (exit)
     return TerminateV();
 }
 
+Value NullExpr::eval(Assoc &e) {
+    return NullV();
+}
+
 Value Unary::eval(Assoc &e) { // evaluation of single-operator primitive
     return evalRator(rand->eval(e));
 }
@@ -238,18 +242,20 @@ Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
 }
 
 Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple args
-    return std::accumulate(args.begin() + 1, args.end(), args[0], H_Plus);
+    return std::accumulate(args.begin(), args.end(), IntegerV(0), H_Plus);
 }
 
 Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple args
+    if (args.size() == 1) return H_Minus(IntegerV(0), args[0]);
     return std::accumulate(args.begin() + 1, args.end(), args[0], H_Minus);
 }
 
 Value MultVar::evalRator(const std::vector<Value> &args) { // * with multiple args
-    return std::accumulate(args.begin() + 1, args.end(), args[0], H_Mult);
+    return std::accumulate(args.begin(), args.end(), IntegerV(1), H_Mult);
 }
 
 Value DivVar::evalRator(const std::vector<Value> &args) { // / with multiple args
+    if (args.size() == 1) return H_Div(IntegerV(1), args[0]);
     return std::accumulate(args.begin() + 1, args.end(), args[0], H_Div);
 }
 
@@ -405,22 +411,42 @@ Value GreaterVar::evalRator(const std::vector<Value> &args) { // > with multiple
 
 Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
     //TODO: To complete the cons logic
+    return PairV(rand1, rand2);
 }
 
 Value ListFunc::evalRator(const std::vector<Value> &args) { // list function
     //TODO: To complete the list logic
+    return std::accumulate(
+        args.rbegin(), args.rend(), NullV(),
+        [](Value tail, const Value& x) {
+            return PairV(x, tail);
+        }
+    );
+}
+
+bool H_IsList(const Value &rand) {
+    return rand->v_type == V_NULL || rand->v_type == V_PAIR && H_IsList(static_cast<Pair*>(rand.get())->cdr);
 }
 
 Value IsList::evalRator(const Value &rand) { // list?
     //TODO: To complete the list? logic
+    return BooleanV(H_IsList(rand));
 }
 
 Value Car::evalRator(const Value &rand) { // car
     //TODO: To complete the car logic
+    if (rand->v_type != V_PAIR) {
+        throw(RuntimeError("Wrong typename"));
+    }
+    return static_cast<Pair*>(rand.get())->car;
 }
 
 Value Cdr::evalRator(const Value &rand) { // cdr
     //TODO: To complete the cdr logic
+        if (rand->v_type != V_PAIR) {
+        throw(RuntimeError("Wrong typename"));
+    }
+    return static_cast<Pair*>(rand.get())->cdr;
 }
 
 Value SetCar::evalRator(const Value &rand1, const Value &rand2) { // set-car!
@@ -487,10 +513,24 @@ Value Begin::eval(Assoc &e) {
 
 Value Quote::eval(Assoc& e) {
     //TODO: To complete the quote logic
+    return ex->eval(e);
 }
 
 Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
-    //TODO: To complete the and logic
+    // Scheme semantics:
+    // - (and) => #t
+    // - Evaluate left-to-right; on first #f, return #f without evaluating rest
+    // - If all are truthy, return the last evaluated value
+    if (rands.empty()) return BooleanV(true);
+
+    Value last = BooleanV(true);
+    for (const auto &ex : rands) {
+        last = ex->eval(e);
+        if (last->v_type == V_BOOL && !static_cast<Boolean*>(last.get())->b) {
+            return BooleanV(false);
+        }
+    }
+    return last;
 }
 
 Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
@@ -562,4 +602,8 @@ Value Display::evalRator(const Value &rand) { // display function
     }
     
     return VoidV();
+}
+
+Value Quoted_Symbol::eval(Assoc &env) {
+    return SymbolV(var);
 }

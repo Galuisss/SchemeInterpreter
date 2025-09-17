@@ -51,6 +51,8 @@ MakeVoid::MakeVoid() : ExprBase(E_VOID) {}
 
 Exit::Exit() : ExprBase(E_EXIT) {}
 
+NullExpr::NullExpr() : ExprBase(E_NULL) {}
+
 //BASIC ABSTRACT TYPES FOR PARAMETERS
 
 Unary::Unary(ExprType et, const Expr &expr) : ExprBase(et), rand(expr) {}
@@ -149,7 +151,7 @@ IsString::IsString(const Expr &r1) : Unary(E_STRINGQ, r1) {}
 
 Begin::Begin(const vector<Expr> &vec) : ExprBase(E_BEGIN), es(vec) {}
 
-Quote::Quote(const Syntax &t) : ExprBase(E_QUOTE), s(t) {}
+Quote::Quote(const Expr &expr) : ExprBase(E_QUOTE), ex(expr) {}
 
 //CONDITIONAL
 
@@ -180,3 +182,5 @@ Set::Set(const std::string &var, const Expr &e) : ExprBase(E_SET), var(var), e(e
 //I/O OPERATIONS
 
 Display::Display(const Expr &r) : Unary(E_DISPLAY, r) {}
+
+Quoted_Symbol::Quoted_Symbol(const std::string &s) : ExprBase(E_QUOTED_SYMBOL), var(s) {}

@@ -100,6 +100,11 @@ struct Exit : ExprBase {
     virtual Value eval(Assoc &) override;
 };
 
+struct NullExpr : ExprBase {
+    NullExpr();
+    virtual Value eval(Assoc &) override;
+};
+
 // ================================================================================
 //                             BASIC ABSTRACT TYPES FOR PARAMETERS
 // ================================================================================
@@ -350,9 +355,10 @@ struct Begin : ExprBase {
 };
 
 struct Quote : ExprBase {
-  Syntax s;
-  Quote(const Syntax &);
-  virtual Value eval(Assoc &) override;
+    //Syntax s;
+    Expr ex;
+    Quote(const Expr &);
+    virtual Value eval(Assoc &) override;
 };
 
 // ================================================================================
@@ -442,4 +448,9 @@ struct Display : Unary {
     virtual Value evalRator(const Value &) override;
 };
 
+struct Quoted_Symbol : ExprBase {
+    std::string var;
+    Quoted_Symbol(const std::string &s);
+    virtual Value eval(Assoc &) override;
+};
 #endif

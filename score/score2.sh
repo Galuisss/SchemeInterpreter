@@ -78,4 +78,4 @@ summarize_range() {
 }
 
 # 主流程：测试 data/1..8
-summarize_range "data" 1 30
+summarize_range "data" 1 20

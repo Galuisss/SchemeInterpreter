@@ -15,6 +15,7 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include <numeric>
 
 #define mp make_pair
 using std::string;
@@ -32,12 +33,24 @@ Expr Syntax::parse(Assoc &env) {
     throw RuntimeError("Unimplemented parse method");
 }
 
+Expr Syntax::q_parse() {
+    return (*this)->q_parse();
+    throw RuntimeError("Unimplemented parse method");
+}
+
 Expr Number::parse(Assoc &env) {
     return Expr(new Fixnum(n));
 }
 
+Expr Number::q_parse() {
+    return Expr(new Fixnum(n));
+}
+
 Expr RationalSyntax::parse(Assoc &env) {
-    //TODO: complete the rational parser
+    return Expr(new RationalNum(numerator, denominator));
+}
+
+Expr RationalSyntax::q_parse() {
     return Expr(new RationalNum(numerator, denominator));
 }
 
@@ -45,7 +58,15 @@ Expr SymbolSyntax::parse(Assoc &env) {
     return Expr(new Var(s));
 }
 
+Expr SymbolSyntax::q_parse() {
+    return Expr(new Quoted_Symbol(s));
+}
+
 Expr StringSyntax::parse(Assoc &env) {
+    return Expr(new StringExpr(s));
+}
+
+Expr StringSyntax::q_parse() {
     return Expr(new StringExpr(s));
 }
 
@@ -53,13 +74,21 @@ Expr TrueSyntax::parse(Assoc &env) {
     return Expr(new True());
 }
 
+Expr TrueSyntax::q_parse() {
+    return Expr(new True());
+}
+
 Expr FalseSyntax::parse(Assoc &env) {
+    return Expr(new False());
+}
+
+Expr FalseSyntax::q_parse() {
     return Expr(new False());
 }
 
 Expr List::parse(Assoc &env) {
     if (stxs.empty()) {
-        return Expr(new Quote(Syntax(new List())));
+        return Expr(new Quote(Expr(new NullExpr())));
     }
 
     //TODO: check if the first element is a symbol
@@ -69,6 +98,7 @@ Expr List::parse(Assoc &env) {
     
     if (id == nullptr) {
         //TODO: TO COMPLETE THE LOGIC
+        throw(RuntimeError("No input"));
     }else{
     string op = id->s;
     if (find(op, env).get() != nullptr) {
@@ -88,13 +118,13 @@ Expr List::parse(Assoc &env) {
             case E_PLUS:
             return Expr(new PlusVar(parameters));
             case E_MINUS:
-            return Expr(new MinusVar(parameters));
+            return parameters.size() >= 1 ? Expr(new MinusVar(parameters)): throw RuntimeError("Wrong number of arguments for -");
             case E_MUL:
             return Expr(new MultVar(parameters));
             case E_DIV:
-            return Expr(new DivVar(parameters));
+            return parameters.size() >= 1 ? Expr(new DivVar(parameters)): throw RuntimeError("Wrong number of arguments for /");
             case E_MODULO:
-            return parameters.size() == 2 ? Expr(new Modulo(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 2 ? Expr(new Modulo(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for modulo");
             case E_EXPT:
             return parameters.size() == 2 ? Expr(new Expt(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for expt");
             // Comparison operations
@@ -117,37 +147,43 @@ Expr List::parse(Assoc &env) {
             return Expr(new OrVar(parameters));
             // List operations
             case E_CONS:
+            return parameters.size() == 2 ? Expr(new Cons(parameters[0], parameters[1])): throw RuntimeError("Wrong number of arguments for cons");
             case E_CAR:
+            return parameters.size() == 1 ? Expr(new Car(parameters[0])) : throw RuntimeError("Wrong number of arguments for car");
             case E_CDR:
+            return parameters.size() == 1 ? Expr(new Cdr(parameters[0])) : throw RuntimeError("Wrong number of arguments for cdr");
             case E_LIST:
             return Expr(new ListFunc(parameters));
             // Type predicates
             case E_EQQ:
             case E_BOOLQ:
-            return parameters.size() == 1 ? Expr(new IsBoolean(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 1 ? Expr(new IsBoolean(parameters[0])): throw RuntimeError("Wrong number of arguments for boolean?");
             case E_INTQ:
-            return parameters.size() == 1 ? Expr(new IsFixnum(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 1 ? Expr(new IsFixnum(parameters[0])): throw RuntimeError("Wrong number of arguments for number??");
             case E_NULLQ:
-            return parameters.size() == 1 ? Expr(new IsNull(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 1 ? Expr(new IsNull(parameters[0])): throw RuntimeError("Wrong number of arguments for null?");
             case E_PAIRQ:
-            return parameters.size() == 1 ? Expr(new IsPair(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 1 ? Expr(new IsPair(parameters[0])): throw RuntimeError("Wrong number of arguments for pair?");
             case E_PROCQ:
-            return parameters.size() == 1 ? Expr(new IsProcedure(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 1 ? Expr(new IsProcedure(parameters[0])): throw RuntimeError("Wrong number of arguments for procedure?");
             case E_SYMBOLQ:
-            return parameters.size() == 1 ? Expr(new IsSymbol(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
-            case E_LISTQ: break;
+            return parameters.size() == 1 ? Expr(new IsSymbol(parameters[0])): throw RuntimeError("Wrong number of arguments for symbol?");
+            case E_LISTQ: 
+            return parameters.size() == 1 ? Expr(new IsList(parameters[0])): throw RuntimeError("Wrong number of arguments for list?");
             case E_STRINGQ:
-            return parameters.size() == 1 ? Expr(new IsString(parameters[0])): throw RuntimeError("Wrong number of arguments for expt");
+            return parameters.size() == 1 ? Expr(new IsString(parameters[0])): throw RuntimeError("Wrong number of arguments for string?");
             default:
                 break;
         }
     }
 
     if (reserved_words.count(op) != 0) {
-    	switch (reserved_words[op]) {
+    	switch (reserved_words[op]) { 
             // Control flow constructs
             case E_BEGIN:
+            break;
             case E_QUOTE:
+            return stxs.size() == 2 ? Expr(new Quote(stxs[1]->q_parse())): throw RuntimeError("Wrong number of arguments for quote");
             //Conditional
             case E_IF:
             case E_COND:
@@ -169,4 +205,30 @@ Expr List::parse(Assoc &env) {
     //default: use Apply to be an expression
     //TODO: TO COMPLETE THE PARSER LOGIC
 }
+}
+
+
+Expr List::q_parse() {
+
+    if (stxs.size() >= 3) {
+        auto s = *(stxs.rbegin() + 1);
+        auto ss = static_cast<SymbolSyntax*>(s.get());
+        if (ss != nullptr && ss->s == ".") {
+            Expr ex = (*stxs.rbegin())->q_parse();
+            return std::accumulate(
+            (stxs.rbegin() + 2), stxs.rend(), ex,
+            [](Expr tail, const Syntax& x) {
+            return Expr(new Cons(x->q_parse(), tail));
+        }
+        );
+        }
+    }
+
+    Expr ex = Expr(new NullExpr());
+    return std::accumulate(
+        stxs.rbegin(), stxs.rend(), ex,
+        [](Expr tail, const Syntax& x) {
+            return Expr(new Cons(x->q_parse(), tail));
+        }
+    );
 }

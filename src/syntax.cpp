@@ -9,7 +9,8 @@ SyntaxBase* Syntax::get() const { return ptr.get(); }
 
 Number::Number(int n) : n(n) {}
 void Number::show(std::ostream &os) {
-  os << "the-number-" << n;
+  //os << "the-number-" << n;
+  os << n;
 }
 
 RationalSyntax::RationalSyntax(int num, int den) : numerator(num), denominator(den) {}
