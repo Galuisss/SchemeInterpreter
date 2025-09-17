@@ -30,6 +30,13 @@
 *.exe
 *.app
 
+# Build files
 build
-score
 code
+
+# Test output
+score/scm.out
+score/scm.raw.out
+
+# VSCode
+.VScode
