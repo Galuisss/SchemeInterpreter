@@ -1,5 +1,0 @@
-1,2c1
-< DEBUG: Unknown reserved word: letrec
-< RuntimeError
----
-> ((1 . 2) (3 . 2) (4 . 3) (5 . 3) (2 . 1))

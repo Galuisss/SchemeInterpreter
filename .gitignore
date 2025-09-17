@@ -37,6 +37,7 @@ code
 # Test output
 score/scm.out
 score/scm.raw.out
+score/diff_output.txt
 
 # VSCode
-.VScode
+.vscode
