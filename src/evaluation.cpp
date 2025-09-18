@@ -719,6 +719,7 @@ Expr IsString::evalRator(const Expr &rand) { // string?
 }
 
 Expr Begin::eval(Assoc &e) {
+    if (es.empty()) return Expr(nullptr);
     auto p = es.begin(), q = es.end() - 1;
     while (p != q) {
         (*p)->eval(e);
@@ -732,6 +733,7 @@ Expr Quote::eval(Assoc& e) {
 }
 
 bool is_false(Expr a) {
+    if (a.get() == nullptr) return false;
     return a->e_type == E_BOOLEAN && !static_cast<Boolean*>(a.get())->b;
 }
 

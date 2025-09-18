@@ -32,6 +32,7 @@ ExprBase& Expr::operator*() { return *ptr; }
 ExprBase* Expr::get() const { return ptr.get(); }
 
 void Expr::show(std::ostream &os) const { 
+    if (get() == nullptr) return;
     this->ptr->show(os);
 }
 
