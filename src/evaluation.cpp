@@ -19,10 +19,24 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <cctype>
 
 extern std::map<std::string, ExprType> primitives;
 extern std::map<std::string, ExprType> reserved_words;
 
+bool is_valid_var(const std::string &s) {
+    if (s.empty()) return false;
+    if (0 <= s[0]-'0' && s[0]-'0' <= 9 || s[0] == '@' || s[0] == '.') return false;
+    for (char c : s) {
+        if (std::isspace(static_cast<unsigned char>(c))) return false;
+        if (c == '#' || c == '\'' || c == '"' || c == '`') return false;
+    }
+    return true;
+}
+
+void assert_valid_var(const std::string &s) {
+    if (!is_valid_var(s)) throw(RuntimeError("not a valid variable name!"));
+}
 
 Expr self_evaluating::eval(const EnvPtr &) {
     return Expr(this);
@@ -219,6 +233,7 @@ Expr SList::eval(const EnvPtr &e) {
                 std::transform(Vars.begin(), Vars.end(), std::back_inserter(paras),[](Expr x) {
                     auto y = dynamic_cast<Var*>(x.get()); 
                     if (y == nullptr) throw(RuntimeError("lambda parameter is not Var"));
+                    assert_valid_var(y->x);
                     return y->x;
                 });
                 auto res = std::vector<Expr>(rand.begin() + 1, rand.end());
@@ -274,6 +289,7 @@ Expr SList::eval(const EnvPtr &e) {
                             auto s1 = dynamic_cast<Var*>(s[0].get());
                             auto s2 = s[1];
                             if (s1 != nullptr) {
+                                assert_valid_var(s1->x);
                                 return std::make_pair(s1->x, s2);
                             }
                         }
@@ -300,6 +316,7 @@ Expr SList::eval(const EnvPtr &e) {
                             auto s1 = dynamic_cast<Var*>(s[0].get());
                             auto s2 = s[1];
                             if (s1 != nullptr) {
+                                assert_valid_var(s1->x);
                                 return std::make_pair(s1->x, s2);
                             }
                         }
@@ -856,6 +873,7 @@ Expr Apply::eval(const EnvPtr &env) {
 }
 
 Expr Define::eval(const EnvPtr &env) {
+    assert_valid_var(var);
     add_bind(var, e->eval(env), env);
     return EmptyE();
 }
@@ -864,6 +882,7 @@ Expr Define_f::eval(const EnvPtr &env) {
     if (env == nullptr) {
         throw(RuntimeError("define needs an environment"));
     }
+    assert_valid_var(var);
     add_bind(var, ProcedureE(x, Expr(new Begin(es)), env), env);
     return EmptyE();
 }
@@ -885,6 +904,7 @@ Expr Letrec::eval(const EnvPtr &env) {
 }
 
 Expr Set::eval(const EnvPtr &env) {
+    assert_valid_var(var);
     modify(var, e->eval(env), env);
     return EmptyE();
 }
