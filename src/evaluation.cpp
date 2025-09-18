@@ -576,15 +576,15 @@ Expr Greater::evalRator(const Expr &rand1, const Expr &rand2) { // >
 // 输入比较函数，输出多变量比较函数
 std::function<Expr(const std::vector<Expr> &args)> VarFactory(std::function<bool(const Expr &rand1, const Expr &rand2)> cmp) {
     return [cmp](const std::vector<Expr> &args) {
-        bool sorted = std::accumulate(
-            args.begin() + 1, args.end(), true,
-            [cmp, it = args.begin()](bool acc, const Expr& x) mutable {
-                bool ok = cmp(*it, x);
-                ++it;
-                return acc && ok;
+        if (args.size() <= 1) {
+            return BooleanE(true);
+        }
+        for (auto it = args.begin(), next = it + 1; next != args.end(); ++it, ++next) {
+            if (!cmp(*it, *next)) {
+                return BooleanE(false);
             }
-        );
-        return BooleanE(sorted);
+        }
+        return BooleanE(true);
     };
 }
 
