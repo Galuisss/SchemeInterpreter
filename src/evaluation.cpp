@@ -726,6 +726,14 @@ Expr Quote::eval(Assoc& e) {
     return ex->eval(e);
 }
 
+bool is_false(Expr a) {
+    return a->e_type == E_BOOLEAN && !static_cast<Boolean*>(a.get())->b;
+}
+
+bool is_true(Expr a) {
+    return !is_false(a);
+}
+
 Expr AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     // Scheme semantics:
     // - (and) => #t
@@ -736,7 +744,7 @@ Expr AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     Expr last = BooleanE(true);
     for (const auto &ex : rands) {
         last = ex->eval(e);
-        if (last->e_type == E_BOOLEAN && !static_cast<Boolean*>(last.get())->b) {
+        if (is_false(last)) {
             return BooleanE(false);
         }
     }
@@ -749,7 +757,7 @@ Expr OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     Expr last = BooleanE(false);
     for (const auto &ex : rands) {
         last = ex->eval(e);
-        if (last->e_type == E_BOOLEAN && static_cast<Boolean*>(last.get())->b) {
+        if (is_true(last)) {
             return BooleanE(true);
         }
     }
@@ -757,16 +765,12 @@ Expr OrVar::eval(Assoc &e) { // or with short-circuit evaluation
 }
 
 Expr Not::evalRator(const Expr &rand) { // not
-    if (rand->e_type != E_BOOLEAN) {
-        throw(RuntimeError("Wrong typename"));
-    }
-    bool in = static_cast<Boolean*>(rand.get())->b;
-    return BooleanE(!in);
+    return BooleanE(is_false(rand));
 }
 
 Expr If::eval(Assoc &e) {
     Expr cond_res = cond->eval(e);
-    if (cond_res->e_type == E_BOOLEAN && !static_cast<Boolean*>(cond_res.get())->b) {
+    if (is_false(cond_res)) {
         return alter->eval(e);
     }
     return conseq->eval(e);
