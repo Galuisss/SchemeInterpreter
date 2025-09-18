@@ -793,7 +793,7 @@ Expr Cond::eval(const EnvPtr &env) {
     auto p = clauses.begin();
     auto q = clauses.end() - 1;
     while (p != q) {
-        auto list = static_cast<SList*>(p->get());
+        auto list = dynamic_cast<SList*>(p->get());
         if (list == nullptr) throw(RuntimeError("Wrong form of arguments for cond")); 
         auto terms = list->terms;
 
@@ -808,7 +808,7 @@ Expr Cond::eval(const EnvPtr &env) {
         p++;
     }
 
-    auto list = static_cast<SList*>(p->get());
+    auto list = dynamic_cast<SList*>(p->get());
     if (list == nullptr) throw(RuntimeError("Wrong form of arguments for cond")); 
     auto terms = list->terms;
     int size = terms.size();
