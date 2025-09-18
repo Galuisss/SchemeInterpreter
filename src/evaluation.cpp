@@ -798,7 +798,11 @@ Expr Cond::eval(const EnvPtr &env) {
         auto terms = list->terms;
 
         int size = terms.size();
-        if (size < 2) throw(RuntimeError("Wrong number of arguments for cond"));
+        if (size == 0) throw(RuntimeError("Wrong number of arguments for cond"));
+        if (size == 1) {
+            auto cond_res = terms[0]->eval(env);
+            return cond_res;
+        }
 
         Expr cond_res = terms[0]->eval(env);
         if (is_true(cond_res)) {
@@ -811,12 +815,17 @@ Expr Cond::eval(const EnvPtr &env) {
     auto list = dynamic_cast<SList*>(p->get());
     if (list == nullptr) throw(RuntimeError("Wrong form of arguments for cond")); 
     auto terms = list->terms;
-    int size = terms.size();
-    if (size < 2) throw(RuntimeError("Wrong number of arguments for cond"));
 
-    if (terms[0]->e_type == E_VAR) {
-        auto v = static_cast<Var*>(terms[0].get());
-        if (find(v->x, env).get() == nullptr && v->x == "else") {
+    int size = terms.size();
+    if (size == 0) throw(RuntimeError("Wrong number of arguments for cond"));
+    if (size == 1) {
+        auto cond_res = terms[0]->eval(env);
+        return cond_res;
+    }
+
+    if (terms[0].get() != nullptr && terms[0]->e_type == E_VAR) {
+        auto v = dynamic_cast<Var*>(terms[0].get());
+        if (v != nullptr && find(v->x, env).get() == nullptr && v->x == "else") {
             auto res = std::vector<Expr>(terms.begin() + 1, terms.end());
             return Expr(new Begin(res))->eval(env);
         }
