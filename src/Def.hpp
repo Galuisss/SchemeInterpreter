@@ -15,12 +15,13 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <memory>
 
 // Forward declarations
 struct Syntax;
 struct Expr;
-struct AssocList;
-struct Assoc;
+struct Env;
+using EnvPtr = std::shared_ptr<Env>;
 
 /**
  * @brief Expression types enumeration

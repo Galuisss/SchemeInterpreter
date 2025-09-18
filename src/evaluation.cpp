@@ -18,31 +18,33 @@
 #include <numeric>
 #include <algorithm>
 #include <functional>
+#include <memory>
 
 extern std::map<std::string, ExprType> primitives;
 extern std::map<std::string, ExprType> reserved_words;
 
 
-Expr self_evaluating::eval(Assoc &) {
+Expr self_evaluating::eval(const EnvPtr &) {
     return Expr(this);
 }
 
-Expr Unary::eval(Assoc &e) { // evaluation of single-operator primitive
+
+Expr Unary::eval(const EnvPtr &e) { // evaluation of single-operator primitive
     return evalRator(rand->eval(e));
 }
 
-Expr Binary::eval(Assoc &e) { // evaluation of two-operators primitive
+Expr Binary::eval(const EnvPtr &e) { // evaluation of two-operators primitive
     return evalRator(rand1->eval(e), rand2->eval(e));
 }
 
-Expr Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
+Expr Variadic::eval(const EnvPtr &e) { // evaluation of multi-operator primitive
     std::vector<Expr> results;
     results.reserve(rands.size());
     std::transform(rands.begin(), rands.end(), std::back_inserter(results), [&e](const Expr &x){return x->eval(e);});
     return evalRator(results);
 }
 
-Expr Var::eval(Assoc &e) { // evaluation of variable
+Expr Var::eval(const EnvPtr &e) { // evaluation of variable
     // We request all valid variable just need to be a Var,you should promise:
     //The first character of a variable name cannot be a digit or any character from the set: {.@}
     //If a string can be recognized as a number, it will be prioritized as a number. For example: 1, -1, +123, .123, +124., 1e-3
@@ -91,7 +93,7 @@ Expr Quoted(const Expr&e) {
         });
 }
 
-Expr SList::eval(Assoc &e) {
+Expr SList::eval(const EnvPtr &e) {
     Expr p = terms[0]->eval(e);
     if (p->e_type == E_PROC) {
         Procedure* clos_ptr = static_cast<Procedure*>(p.get());
@@ -718,7 +720,7 @@ Expr IsString::evalRator(const Expr &rand) { // string?
     return BooleanE(rand->e_type == E_STRING);
 }
 
-Expr Begin::eval(Assoc &e) {
+Expr Begin::eval(const EnvPtr &e) {
     if (es.empty()) return Expr(nullptr);
     auto p = es.begin(), q = es.end() - 1;
     while (p != q) {
@@ -728,7 +730,7 @@ Expr Begin::eval(Assoc &e) {
     return (*q)->eval(e);
 }
 
-Expr Quote::eval(Assoc& e) {
+Expr Quote::eval(const EnvPtr &e) {
     return ex->eval(e);
 }
 
@@ -741,7 +743,7 @@ bool is_true(Expr a) {
     return !is_false(a);
 }
 
-Expr AndVar::eval(Assoc &e) { // and with short-circuit evaluation
+Expr AndVar::eval(const EnvPtr &e) { // and with short-circuit evaluation
     // Scheme semantics:
     // - (and) => #t
     // - Evaluate left-to-right; on first #f, return #f without evaluating rest
@@ -758,7 +760,7 @@ Expr AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     return last;
 }
 
-Expr OrVar::eval(Assoc &e) { // or with short-circuit evaluation
+Expr OrVar::eval(const EnvPtr &e) { // or with short-circuit evaluation
     if (rands.empty()) return BooleanE(false);
 
     Expr last = BooleanE(false);
@@ -775,7 +777,7 @@ Expr Not::evalRator(const Expr &rand) { // not
     return BooleanE(is_false(rand));
 }
 
-Expr If::eval(Assoc &e) {
+Expr If::eval(const EnvPtr &e) {
     Expr cond_res = cond->eval(e);
     if (is_false(cond_res)) {
         return alter->eval(e);
@@ -783,7 +785,7 @@ Expr If::eval(Assoc &e) {
     return conseq->eval(e);
 }
 
-Expr Cond::eval(Assoc &env) {
+Expr Cond::eval(const EnvPtr &env) {
     auto p = clauses.begin();
     auto q = clauses.end() - 1;
     while (p != q) {
@@ -825,52 +827,56 @@ Expr Cond::eval(Assoc &env) {
     return Expr(nullptr);
 }
 
-Expr Lambda::eval(Assoc &env) { 
+Expr Lambda::eval(const EnvPtr &env) { 
     return ProcedureE(x, e, env);
 }
 
-Expr Apply::eval(Assoc &e) {
+Expr Apply::eval(const EnvPtr &env) {
     auto p = static_cast<Procedure*>(rator.get());
     if (rand.size() != p->parameters.size()) {throw RuntimeError("Wrong number of arguments");}
 
-    Assoc param_env = p->env;
-    for (int i = 0; i < rand.size(); i++) {
-        param_env = extend(p->parameters[i], rand[i], param_env);
+    EnvPtr param_env = std::make_shared<Env>(p->env);
+    for (size_t i = 0; i < rand.size(); i++) {
+        add_bind(p->parameters[i], rand[i], param_env);
     }
     return p->e->eval(param_env);
 }
 
-Expr Define::eval(Assoc &env) {
-    env = extend(var, e->eval(env), env);
+Expr Define::eval(const EnvPtr &env) {
+    add_bind(var, e->eval(env), env);
     return Expr(nullptr);
 }
 
-Expr Define_f::eval(Assoc &env) {
-    env = extend(var, Expr(nullptr), env);
-    env->v = ProcedureE(x, e, env);
+Expr Define_f::eval(const EnvPtr &env) {
+    if (env == nullptr) {
+        throw(RuntimeError("define needs an environment"));
+    }
+    auto &frame = env->bindings;
+    auto inserted = frame.emplace(var, Expr(nullptr));
+    inserted.first->second = ProcedureE(x, e, env);
     return Expr(nullptr);
 }
 
-Expr Let::eval(Assoc &env) {
-    Assoc param_env = env;
+Expr Let::eval(const EnvPtr &env) {
+    EnvPtr param_env = std::make_shared<Env>(env);
     for (auto b : bind) {
-        param_env = extend(b.first, b.second->eval(env), param_env);
+        add_bind(b.first, b.second->eval(env), param_env);
     }
     return Expr(new Begin(body))->eval(param_env);
 }
 
-Expr Letrec::eval(Assoc &env) {
-    Assoc param_env = env;
+Expr Letrec::eval(const EnvPtr &env) {
+    EnvPtr param_env = std::make_shared<Env>(env);
     for (auto b : bind) {
-        param_env = extend(b.first, Expr(nullptr), param_env);
+        add_bind(b.first, Expr(nullptr), param_env);
     }
     for (auto b : bind) {
-        modify(b.first, (b.second)->eval(param_env), param_env);
+        add_bind(b.first, b.second->eval(param_env), param_env);
     }
     return Expr(new Begin(body))->eval(param_env);
 }
 
-Expr Set::eval(Assoc &env) {
+Expr Set::eval(const EnvPtr &env) {
     modify(var, e->eval(env), env);
     return Expr(nullptr);
 }

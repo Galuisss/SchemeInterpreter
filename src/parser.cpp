@@ -23,37 +23,37 @@ using std::pair;
 extern std::map<std::string, ExprType> primitives;
 extern std::map<std::string, ExprType> reserved_words;
 
-Expr Syntax::parse(Assoc &env) {
-    return (*this)->parse(env);
+Expr Syntax::parse() {
+    return (*this)->parse();
 }
 
-Expr Number::parse(Assoc &env) {
+Expr Number::parse() {
     return Expr(new Fixnum(n));
 }
 
-Expr RationalSyntax::parse(Assoc &env) {
+Expr RationalSyntax::parse() {
     return Expr(new RationalNum(numerator, denominator));
 }
 
-Expr SymbolSyntax::parse(Assoc &env) {
+Expr SymbolSyntax::parse() {
     return Expr(new Var(s));
 }
 
-Expr StringSyntax::parse(Assoc &env) {
+Expr StringSyntax::parse() {
     return Expr(new StringExpr(s));
 }
 
-Expr TrueSyntax::parse(Assoc &env) {
+Expr TrueSyntax::parse() {
     return Expr(new Boolean(true));
 }
 
-Expr FalseSyntax::parse(Assoc &env) {
+Expr FalseSyntax::parse() {
     return Expr(new Boolean(false));
 }
 
-Expr List::parse(Assoc &env) {
+Expr List::parse() {
     std::vector<Expr> exprs;
-    std::transform(stxs.begin(), stxs.end(), std::back_inserter(exprs),[&env](Syntax s) {return s->parse(env);});
+    std::transform(stxs.begin(), stxs.end(), std::back_inserter(exprs),[](Syntax s) {return s->parse();});
     return Expr(new SList(exprs));
 }
 

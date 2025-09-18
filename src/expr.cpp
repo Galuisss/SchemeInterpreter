@@ -1,7 +1,9 @@
 #include "Def.hpp"
+#include "RE.hpp"
 #include "expr.hpp"
 #include <cstring>
 #include <cstdlib>
+#include <utility>
 #include <vector>
 using std::vector;
 using std::string;
@@ -36,44 +38,37 @@ void Expr::show(std::ostream &os) const {
     this->ptr->show(os);
 }
 
-AssocList::AssocList(const std::string &x, const Expr &v, Assoc &next)
-    : x(x), v(v), next(next) {}
+Env::Env(EnvPtr parent_env) : bindings(), parent(std::move(parent_env)) {}
+Env::Env() : bindings(), parent(nullptr) {}
 
-Assoc::Assoc(AssocList *x) : ptr(x) {}
-
-AssocList* Assoc::operator->() const { 
-    return ptr.get(); 
-}
-
-AssocList& Assoc::operator*() { 
-    return *ptr; 
-}
-
-AssocList* Assoc::get() const { 
-    return ptr.get(); 
-}
-
-Assoc empty() {
-    return Assoc(nullptr);
-}
-
-Assoc extend(const std::string &x, const Expr &v, Assoc &lst) {
-    return Assoc(new AssocList(x, v, lst));
-}
-
-void modify(const std::string &x, const Expr &v, Assoc &lst) {
-    for (auto i = lst; i.get() != nullptr; i = i->next) {
-        if (x == i->x) {
-            i->v = v;
+void modify(const std::string &x, const Expr &v, const EnvPtr &env) {
+    for (EnvPtr cur = env; cur != nullptr; cur = cur->parent) {
+        auto it = cur->bindings.find(x);
+        if (it != cur->bindings.end()) {
+            it->second = v;
             return;
         }
     }
+    throw(RuntimeError("try to set! a non-existent var"));
 }
 
-Expr find(const std::string &x, Assoc &l) {
-    for (auto i = l; i.get() != nullptr; i = i->next) {
-        if (x == i->x) {
-            return i->v;
+void add_bind(const std::string &x, const Expr &v, const EnvPtr &env) {
+    if (env == nullptr) {
+        throw(RuntimeError("attempt to bind in an empty environment"));
+    }
+    auto it = env->bindings.find(x);
+    if (it != env->bindings.end()) {
+        it->second = v;
+    } else {
+        env->bindings.emplace(x, v);
+    }
+}
+
+Expr find(const std::string &x, const EnvPtr &env) {
+    for (EnvPtr cur = env; cur != nullptr; cur = cur->parent) {
+        auto it = cur->bindings.find(x);
+        if (it != cur->bindings.end()) {
+            return it->second;
         }
     }
     return Expr(nullptr);
@@ -85,7 +80,7 @@ self_evaluating::self_evaluating(ExprType et) : ExprBase(et) {}
 
 Fixnum::Fixnum(int x) : self_evaluating(E_FIXNUM), n(x) {}
 
-Expr Fixnum::eval(Assoc &) {
+Expr Fixnum::eval(const EnvPtr &) {
     return FixnumE(n);
 }
 
@@ -104,57 +99,58 @@ RationalNum::RationalNum(int num, int den) : self_evaluating(E_RATIONAL), numera
 
 RationalNum::RationalNum(const Fixnum &a) : self_evaluating(E_RATIONAL), numerator(a.n), denominator(1) {}
 
-Expr RationalNum::eval(Assoc &) {
+Expr RationalNum::eval(const EnvPtr &) {
     return RationalNumE(numerator, denominator);
 }
 
 StringExpr::StringExpr(const std::string &str) : self_evaluating(E_STRING), s(str) {}
 
-Expr StringExpr::eval(Assoc &) {
+Expr StringExpr::eval(const EnvPtr &) {
     return StringExprE(s);
 }
 
 Boolean::Boolean(const bool &b) : self_evaluating(E_BOOLEAN), b(b) {}
 
-Expr Boolean::eval(Assoc &) {
+Expr Boolean::eval(const EnvPtr &) {
     return BooleanE(b);
 }
 
 MakeVoid::MakeVoid() : self_evaluating(E_VOID) {}
 
-Expr MakeVoid::eval(Assoc &) {
+Expr MakeVoid::eval(const EnvPtr &) {
     return MakeVoidE();
 }
 
 Exit::Exit() : self_evaluating(E_EXIT) {}
 
-Expr Exit::eval(Assoc &) {
+Expr Exit::eval(const EnvPtr &) {
     return ExitE();
 }
 
 NullExpr::NullExpr() : self_evaluating(E_NULL) {}
 
-Expr NullExpr::eval(Assoc &) {
+Expr NullExpr::eval(const EnvPtr &) {
     return NullExprE();
 }
 
 Pair::Pair(const Expr &car, const Expr &cdr) : self_evaluating(E_PAIR), car(car), cdr(cdr) {}
 
-Expr Pair::eval(Assoc &) {
+Expr Pair::eval(const EnvPtr &) {
     return PairE(car, cdr);
 }
 
-Procedure::Procedure(const std::vector<std::string> &vec, const Expr &e, const Assoc &env) : self_evaluating(E_PROC), parameters(vec), e(e), env(env) {}
+Procedure::Procedure(const std::vector<std::string> &vec, const Expr &e, const EnvPtr &env)
+    : self_evaluating(E_PROC), parameters(vec), e(e), env(env) {}
 
-Expr Procedure::eval(Assoc &) {
+Expr Procedure::eval(const EnvPtr &) {
     return ProcedureE(parameters, e, env);
 }
 
-Expr Primitive::eval(Assoc &) {
+Expr Primitive::eval(const EnvPtr &) {
     return PrimitiveE(type);
 }
 
-Expr SpecialForm::eval(Assoc &) {
+Expr SpecialForm::eval(const EnvPtr &) {
     return SpecialFormE(type);
 }
 

@@ -11,14 +11,15 @@ extern std::map<std::string, ExprType> reserved_words;
 
 void REPL(){
     // read - evaluation - print loop
-    Assoc global_env = empty();
+    EnvPtr global_env = std::make_shared<Env>();
+
     while (1){
         #ifndef ONLINE_JUDGE
             std::cout << "scm> ";
         #endif
         Syntax stx = readSyntax(std :: cin); // read
         try{
-            Expr expr = stx -> parse(global_env); // parse
+            Expr expr = stx -> parse(); // parse
 
             Expr val = expr -> eval(global_env);
             if (val.ptr == nullptr)
