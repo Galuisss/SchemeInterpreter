@@ -662,7 +662,7 @@ Expr SetCar::evalRator(const Expr &rand1, const Expr &rand2) { // set-car!
     }
     auto p = static_cast<Pair*>(rand1.get());
     p->car = rand2;
-    return Expr(nullptr);
+    return EmptyE();
 }
 
 Expr SetCdr::evalRator(const Expr &rand1, const Expr &rand2) { // set-cdr!
@@ -671,7 +671,7 @@ Expr SetCdr::evalRator(const Expr &rand1, const Expr &rand2) { // set-cdr!
     }
     auto p = static_cast<Pair*>(rand1.get());
     p->cdr = rand2;
-    return Expr(nullptr);
+    return EmptyE();
 }
 
 Expr IsEq::evalRator(const Expr &rand1, const Expr &rand2) { // eq?
@@ -725,7 +725,7 @@ Expr IsString::evalRator(const Expr &rand) { // string?
 }
 
 Expr Begin::eval(const EnvPtr &e) {
-    if (es.empty()) return Expr(nullptr);
+    if (es.empty()) return EmptyE();
     auto p = es.begin(), q = es.end() - 1;
     while (p != q) {
         (*p)->eval(e);
@@ -837,7 +837,7 @@ Expr Cond::eval(const EnvPtr &env) {
         return Expr(new Begin(res))->eval(env);
     }
 
-    return Expr(nullptr);
+    return EmptyE();
 }
 
 Expr Lambda::eval(const EnvPtr &env) { 
@@ -857,7 +857,7 @@ Expr Apply::eval(const EnvPtr &env) {
 
 Expr Define::eval(const EnvPtr &env) {
     add_bind(var, e->eval(env), env);
-    return Expr(nullptr);
+    return EmptyE();
 }
 
 Expr Define_f::eval(const EnvPtr &env) {
@@ -865,7 +865,7 @@ Expr Define_f::eval(const EnvPtr &env) {
         throw(RuntimeError("define needs an environment"));
     }
     add_bind(var, ProcedureE(x, Expr(new Begin(es)), env), env);
-    return Expr(nullptr);
+    return EmptyE();
 }
 
 Expr Let::eval(const EnvPtr &env) {
@@ -886,7 +886,7 @@ Expr Letrec::eval(const EnvPtr &env) {
 
 Expr Set::eval(const EnvPtr &env) {
     modify(var, e->eval(env), env);
-    return Expr(nullptr);
+    return EmptyE();
 }
 
 Expr Display::evalRator(const Expr &rand) { // display function
@@ -897,5 +897,5 @@ Expr Display::evalRator(const Expr &rand) { // display function
         rand->show(std::cout);
     }
     //puts("");
-    return Expr(nullptr);
+    return EmptyE();
 }

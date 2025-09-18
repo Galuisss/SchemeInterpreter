@@ -188,6 +188,11 @@ struct Procedure : self_evaluating {
 };
 inline Expr ProcedureE(const std::vector<std::string> &vec, const Expr &e, const EnvPtr &env) {return Expr(new Procedure(vec, e, env));};
 
+struct Empty : self_evaluating {
+    Empty();
+};
+inline Expr EmptyE() {return Expr(new Empty());};
+
 // ================================================================================
 //                             BASIC ABSTRACT TYPES FOR PARAMETERS
 // ================================================================================

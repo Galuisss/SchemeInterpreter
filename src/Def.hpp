@@ -41,7 +41,8 @@ enum ExprType {
     E_PROC,
     E_PAIR,
     E_PRIMITIVE,
-    E_SPECIALFORM,            
+    E_SPECIALFORM,
+    E_EMPTY,            
 
     // Arithmetic operations
     E_PLUS,

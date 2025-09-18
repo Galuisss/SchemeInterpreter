@@ -14,9 +14,9 @@ void REPL(){
     EnvPtr global_env = std::make_shared<Env>();
 
     while (1){
-        //#ifndef ONLINE_JUDGE
-            //std::cout << "scm> ";
-        //#endif
+        #ifndef ONLINE_JUDGE
+            std::cout << "scm> ";
+        #endif
         Syntax stx = readSyntax(std :: cin); // read
         try{
             Expr expr = stx -> parse(); // parse
@@ -24,7 +24,6 @@ void REPL(){
             Expr val = expr -> eval(global_env);
             if (val.ptr == nullptr)
             {   
-                //puts("");
                 continue;
             }
             if (val->e_type == E_EXIT)
@@ -32,13 +31,18 @@ void REPL(){
                 puts("");
                 break;
             }
+            if (val->e_type == E_EMPTY) {
+                continue;
+            }
             val.show(std :: cout); // value print
+            puts("");
         }
         catch (const RuntimeError &RE){
-            //`std :: cout << "DEBUG: " << RE.message() << std::endl;
+            #ifndef ONLINE_JUDGE
+            std :: cout << "DEBUG: " << RE.message() << std::endl;
+            #endif
             std :: cout << "RuntimeError";
         }
-        puts("");
     }
 }
 

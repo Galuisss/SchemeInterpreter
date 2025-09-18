@@ -142,6 +142,8 @@ Expr Pair::eval(const EnvPtr &) {
 Procedure::Procedure(const std::vector<std::string> &vec, const Expr &e, const EnvPtr &env)
     : self_evaluating(E_PROC), parameters(vec), e(e), env(env) {}
 
+Empty::Empty() : self_evaluating(E_EMPTY) {}
+
 Expr Procedure::eval(const EnvPtr &) {
     return ProcedureE(parameters, e, env);
 }
