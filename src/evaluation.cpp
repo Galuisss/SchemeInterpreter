@@ -229,7 +229,7 @@ Expr SList::eval(Assoc &e) {
                 // call Define
                 if (var != nullptr) {
                     std::string variable = var->x;
-                    if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+                    //if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
                     return Expr(new Define(variable, rand[1]))->eval(e);
                 }
                 // call Define_f
@@ -311,7 +311,7 @@ Expr SList::eval(Assoc &e) {
                 // call Define
                 if (var != nullptr) {
                     std::string variable = var->x;
-                    if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
+                    //if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
                     return Expr(new Set(variable, rand[1]))->eval(e);
                 }
             }
