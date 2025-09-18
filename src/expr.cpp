@@ -261,7 +261,7 @@ Quote::Quote(const Expr &expr) : ExprBase(E_QUOTE), ex(expr) {}
 
 If::If(const Expr &c, const Expr &c_t, const Expr &c_e) : ExprBase(E_IF), cond(c), conseq(c_t), alter(c_e) {}
 
-Cond::Cond(const std::vector<std::vector<Expr>> &cls) : ExprBase(E_COND), clauses(cls) {}
+Cond::Cond(const std::vector<Expr> &cls) : ExprBase(E_COND), clauses(cls) {}
 
 //VARIABLE AND FUNCITON DEFINITION
 

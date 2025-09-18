@@ -200,7 +200,7 @@ Expr SList::eval(Assoc &e) {
             case E_IF:
             return rand.size() == 3 ? Expr(new If(rand[0], rand[1], rand[2]))->eval(e) : throw RuntimeError("Wrong number of arguments for if");
             case E_COND:
-            break;
+            return Expr(new Cond(rand))->eval(e);
             // Variables and function definition
             case E_LAMBDA:
             {
@@ -780,33 +780,38 @@ Expr Cond::eval(Assoc &env) {
     auto p = clauses.begin();
     auto q = clauses.end() - 1;
     while (p != q) {
-        auto list = *p;
-        int size = list.size();
+        auto list = static_cast<SList*>(p->get());
+        if (list == nullptr) throw(RuntimeError("Wrong form of arguments for cond")); 
+        auto terms = list->terms;
+
+        int size = terms.size();
         if (size < 2) throw(RuntimeError("Wrong number of arguments for cond"));
 
-        Expr cond_res = list[0]->eval(env);
-        if (!(cond_res->e_type == E_BOOLEAN && !static_cast<Boolean*>(cond_res.get())->b)) {
-            auto res = std::vector<Expr>(list.begin() + 1, list.end());
+        Expr cond_res = terms[0]->eval(env);
+        if (is_true(cond_res)) {
+            auto res = std::vector<Expr>(terms.begin() + 1, terms.end());
             return Expr(new Begin(res))->eval(env);
         }
         p++;
     }
 
-    auto list = *p;
-    int size = list.size();
+    auto list = static_cast<SList*>(p->get());
+    if (list == nullptr) throw(RuntimeError("Wrong form of arguments for cond")); 
+    auto terms = list->terms;
+    int size = terms.size();
     if (size < 2) throw(RuntimeError("Wrong number of arguments for cond"));
 
-    if (list[0]->e_type == E_VAR) {
-        auto v = static_cast<Var*>(list[0].get());
+    if (terms[0]->e_type == E_VAR) {
+        auto v = static_cast<Var*>(terms[0].get());
         if (find(v->x, env).get() == nullptr && v->x == "else") {
-            auto res = std::vector<Expr>(list.begin() + 1, list.end());
+            auto res = std::vector<Expr>(terms.begin() + 1, terms.end());
             return Expr(new Begin(res))->eval(env);
         }
     }
 
-    Expr cond_res = list[0]->eval(env);
-    if (!(cond_res->e_type == E_BOOLEAN && !static_cast<Boolean*>(cond_res.get())->b)) {
-        auto res = std::vector<Expr>(list.begin() + 1, list.end());
+    Expr cond_res = terms[0]->eval(env);
+    if (is_true(cond_res)) {
+        auto res = std::vector<Expr>(terms.begin() + 1, terms.end());
         return Expr(new Begin(res))->eval(env);
     }
 

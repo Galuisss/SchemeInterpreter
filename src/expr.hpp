@@ -464,8 +464,8 @@ struct If : ExprBase {
 };
 
 struct Cond : ExprBase {
-    std::vector<std::vector<Expr>> clauses;
-    Cond(const std::vector<std::vector<Expr>> &);
+    std::vector<Expr> clauses;
+    Cond(const std::vector<Expr> &);
     virtual Expr eval(Assoc &) override;
 };
 
