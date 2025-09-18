@@ -526,6 +526,9 @@ struct Primitive : self_evaluating {
     ExprType type;
     Primitive(ExprType);
     virtual Expr eval(Assoc &) override;
+    inline virtual void show(std::ostream &os) const override {
+        os << "#<procedure>";
+    }
 };
 inline Expr PrimitiveE(ExprType et) {return Expr(new Primitive(et));};
 
