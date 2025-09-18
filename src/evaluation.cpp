@@ -157,6 +157,11 @@ Expr SList::eval(Assoc &e) {
                 if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for set-cdr!"));
                 return Expr(new SetCdr(rand[0], rand[1]))->eval(e);
             }
+            case E_DISPLAY:
+            {
+                if (rand.size() != 1) throw(RuntimeError("Wrong number of arguments for display!"));
+                return Expr(new Display(rand[0]))->eval(e);
+            }
             // Type predicates
             case E_EQQ:
             return rand.size() == 2 ? Expr(new IsEq(rand[0], rand[1]))->eval(e): throw RuntimeError("Wrong number of arguments for eq?");
@@ -876,5 +881,5 @@ Expr Display::evalRator(const Expr &rand) { // display function
         rand->show(std::cout);
     }
     
-    return MakeVoidE();
+    return Expr(nullptr);
 }
