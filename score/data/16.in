@@ -1,1 +1,170 @@
-(boolean? #f)
+(define sum3 (lambda (a b c) (+ a b c)))
+(sum3 1 2 3)
+(define square (lambda (x) (* x x)))
+(square 5)
+(define factorial (lambda (n) (if (= n 0) 1 (* n (factorial (- n 1))))))
+(factorial 4)
+(expt 2 3)
+(expt 3 4)
+(define power (lambda (base exp) (expt base exp)))
+(power 2 5)
+
+(define (circle-area r) (* pi (* r r)))
+
+(define (max2 a b) (if (> a b) a b))
+(define (max3 a b c) (max2 a (max2 b c)))
+
+(define (abs-val x) (if (< x 0) (- 0 x) x))
+
+(define (even-check n) (= (/ n 2) (/ (+ n 1) 2)))
+
+(define (sum-gp a0 r n)
+  (* a0
+     (if (= r 1)
+         n
+         (/ (- 1 (expt r n)) (- 1 r)))))
+
+(circle-area 5)
+(max3 10 7 15)
+(abs-val -8)
+(even-check 10)
+(sum-gp 2 3 4)
+(sum-gp 2 3 4)
+(sum-gp 1 2 5)
+(sum-gp 5 1 10)
+
+(define (test-short-circuit-and)
+  (define x 100)
+  (and #f (define x 200))
+  x)
+
+(test-short-circuit-and)
+
+(define (test-short-circuit-or)
+  (define y 100)
+  (or #t (define y 200))
+  y)
+
+(test-short-circuit-or)
+
+(define hanoi-moves (lambda (n)
+  (if (= n 1)
+      1
+      (+ (* 2 (hanoi-moves (- n 1))) 1))))
+
+(define binary-search-depth (lambda (n)
+  (if (= n 1)
+      1
+      (+ 1 (binary-search-depth (quotient n 2))))))
+
+(define perfect-square-check (lambda (n guess)
+  (if (= (* guess guess) n)
+      guess
+      (if (> (* guess guess) n)
+          0
+          (perfect-square-check n (+ guess 1))))))
+
+(define is-perfect-square (lambda (n) 
+  (if (= (perfect-square-check n 1) 0) #f #t)))
+
+(hanoi-moves 3)
+(hanoi-moves 4)
+
+(binary-search-depth 8)
+(binary-search-depth 16)
+
+(is-perfect-square 9)
+(is-perfect-square 10)
+(is-perfect-square 16)
+
+(define tail-factorial (lambda (n acc)
+  (if (= n 0)
+      acc
+      (tail-factorial (- n 1) (* acc n)))))
+
+(define factorial-tail (lambda (n) (tail-factorial n 1)))
+
+(factorial-tail 5)
+(factorial-tail 6)
+
+(define (safe-divide x y)
+  (and (not (= y 0)) (/ x y)))
+
+(safe-divide 10 2)
+(safe-divide 10 0)
+
+(define sum-of-squares (lambda (n)
+  (if (= n 0)
+      0
+      (+ (* n n) (sum-of-squares (- n 1))))))
+
+(define sum-of-cubes (lambda (n)
+  (if (= n 0)
+      0
+      (+ (* n (* n n)) (sum-of-cubes (- n 1))))))
+
+(define catalan (lambda (n)
+  (if (= n 0)
+      1
+      (if (= n 1)
+          1
+          (+ (catalan (- n 1)) 
+             (* (catalan (- n 1)) (catalan (- n 1))))))))
+
+(define tribonacci (lambda (n)
+  (if (< n 3)
+      1
+      (+ (tribonacci (- n 1)) 
+         (tribonacci (- n 2)) 
+         (tribonacci (- n 3))))))
+
+(define digital-root (lambda (n)
+  (if (< n 10)
+      n
+      (digital-root (+ (/ n 10) (- n (* (/ n 10) 10)))))))
+
+(sum-of-squares 3)
+(sum-of-squares 4)
+
+(sum-of-cubes 3)
+(sum-of-cubes 4)
+
+(tribonacci 4)
+(tribonacci 5)
+(tribonacci 6)
+
+(define factorial (lambda (n) 
+  (if (= n 0) 1 (* n (factorial (- n 1))))))
+(factorial 5)
+
+(define fibonacci (lambda (n)
+  (if (<= n 1) 
+      n 
+      (+ (fibonacci (- n 1)) (fibonacci (- n 2))))))
+(fibonacci 5)
+(fibonacci 8)
+
+(define sum-to-n (lambda (n)
+  (if (= n 0) 
+      0 
+      (+ n (sum-to-n (- n 1))))))
+(sum-to-n 10)
+
+(define power (lambda (base exp)
+  (if (= exp 0)
+      1
+      (* base (power base (- exp 1))))))
+(power 2 3)
+(power 3 4)
+
+(define ackermann (lambda (m n)
+  (if (= m 0)
+      (+ n 1)
+      (if (= n 0)
+          (ackermann (- m 1) 1)
+          (ackermann (- m 1) (ackermann m (- n 1)))))))
+(ackermann 0 5)
+(ackermann 1 3)
+(ackermann 2 3)
+
+(exit)

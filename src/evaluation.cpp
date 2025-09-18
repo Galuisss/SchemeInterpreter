@@ -226,7 +226,7 @@ Expr SList::eval(const EnvPtr &e) {
             }
             case E_DEFINE:
             {
-                if (rand.size() != 2) throw(RuntimeError("Wrong number of arguments for define"));
+                if (rand.size() == 2) {
                 auto var = dynamic_cast<Var*>(rand[0].get());
                 // call Define
                 if (var != nullptr) {
@@ -234,6 +234,7 @@ Expr SList::eval(const EnvPtr &e) {
                     //if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
                     return Expr(new Define(variable, rand[1]))->eval(e);
                 }
+            }
                 // call Define_f
                 auto VarsList = dynamic_cast<SList*>(rand[0].get());
                 if (VarsList == nullptr) throw(RuntimeError("define takes a Var or list as the 1st parameter"));
@@ -245,13 +246,16 @@ Expr SList::eval(const EnvPtr &e) {
                 //if (primitives.count(variable) || reserved_words.count(variable)) throw(RuntimeError("variable names can't be primitives or reserve_words"));
 
                 std::vector<std::string> paras;
+                if (Vars.size() != 1){
                 std::transform(Vars.begin() + 1, Vars.end(), std::back_inserter(paras),[](Expr x) {
                     auto y = dynamic_cast<Var*>(x.get()); 
                     if (y == nullptr) throw(RuntimeError("lambda parameter is not Var"));
                     return y->x;
                 });
+            }
                 Expr body = rand[1];
-                return Expr(new Define_f(variable, paras, body))->eval(e);
+                auto res = std::vector<Expr>(rand.begin() + 1, rand.end());
+                return Expr(new Define_f(variable, paras, res))->eval(e);
             }
             // Binding constructs
             case E_LET:
@@ -851,9 +855,7 @@ Expr Define_f::eval(const EnvPtr &env) {
     if (env == nullptr) {
         throw(RuntimeError("define needs an environment"));
     }
-    auto &frame = env->bindings;
-    auto inserted = frame.emplace(var, Expr(nullptr));
-    inserted.first->second = ProcedureE(x, e, env);
+    add_bind(var, ProcedureE(x, Expr(new Begin(es)), env), env);
     return Expr(nullptr);
 }
 
@@ -867,9 +869,6 @@ Expr Let::eval(const EnvPtr &env) {
 
 Expr Letrec::eval(const EnvPtr &env) {
     EnvPtr param_env = std::make_shared<Env>(env);
-    for (auto b : bind) {
-        add_bind(b.first, Expr(nullptr), param_env);
-    }
     for (auto b : bind) {
         add_bind(b.first, b.second->eval(param_env), param_env);
     }

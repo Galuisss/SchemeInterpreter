@@ -272,7 +272,7 @@ Lambda::Lambda(const vector<string> &vec, const Expr &expr) : ExprBase(E_LAMBDA)
 
 Define::Define(const string &variable, const Expr &expr) : ExprBase(E_DEFINE), var(variable), e(expr) {}
 
-Define_f::Define_f(const string &variable, vector<string>& vec, const Expr &expr) : ExprBase(E_DEFINE), var(variable), x(vec), e(expr) {}
+Define_f::Define_f(const string &variable, vector<string>& vec, const std::vector<Expr> &expr) : ExprBase(E_DEFINE), var(variable), x(vec), es(expr) {}
 
 Primitive::Primitive(ExprType et) : self_evaluating(E_PRIMITIVE), type(et) {}
 

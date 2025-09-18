@@ -510,8 +510,8 @@ struct Define : ExprBase {
 struct Define_f : ExprBase {
     std::string var;
     std::vector<std::string> x;
-    Expr e;
-    Define_f(const std::string &, std::vector<std::string>&, const Expr &);
+    std::vector<Expr> es;
+    Define_f(const std::string &, std::vector<std::string>&, const std::vector<Expr> &);
     virtual Expr eval(const EnvPtr &) override;
 };
 
