@@ -22,7 +22,8 @@ void REPL(){
 
             Expr val = expr -> eval(global_env);
             if (val.ptr == nullptr)
-            {
+            {   
+                puts("");
                 continue;
             }
             if (val->e_type == E_EXIT)

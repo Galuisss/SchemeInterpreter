@@ -882,6 +882,6 @@ Expr Display::evalRator(const Expr &rand) { // display function
     } else {
         rand->show(std::cout);
     }
-    
+    //puts("");
     return Expr(nullptr);
 }
