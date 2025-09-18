@@ -745,7 +745,7 @@ Expr AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     for (const auto &ex : rands) {
         last = ex->eval(e);
         if (is_false(last)) {
-            return BooleanE(false);
+            return last;
         }
     }
     return last;
@@ -758,7 +758,7 @@ Expr OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     for (const auto &ex : rands) {
         last = ex->eval(e);
         if (is_true(last)) {
-            return BooleanE(true);
+            return last;
         }
     }
     return last;
