@@ -42,6 +42,7 @@ void REPL(){
             std :: cout << "DEBUG: " << RE.message() << std::endl;
             #endif
             std :: cout << "RuntimeError";
+            puts("");
         }
     }
 }
