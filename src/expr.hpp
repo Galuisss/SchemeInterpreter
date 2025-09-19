@@ -16,7 +16,7 @@ public:
  * Structures are organized according to ExprType enumeration order from
  * Def.hpp for consistency and maintainability.
  */
-
+#include "RE.hpp"
 #include "Def.hpp"
 #include "syntax.hpp"
 #include <memory>
@@ -534,6 +534,9 @@ struct SpecialForm : self_evaluating {
     ExprType type;
     SpecialForm(ExprType);
     virtual Expr eval(const EnvPtr &) override;
+    inline virtual void show(std::ostream &os) const override {
+        throw(RuntimeError("Special form can't be showed"));
+    }
 };
 inline Expr SpecialFormE(ExprType et) {return Expr(new SpecialForm(et));};
 // ================================================================================
