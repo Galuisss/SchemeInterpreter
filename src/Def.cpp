@@ -25,7 +25,7 @@
  * - I/O: display
  * - Control: void, exit
  */
-std::map<std::string, ExprType> primitives = {
+std::unordered_map<std::string, ExprType> primitives = {
     // Arithmetic operations
     {"+",        E_PLUS},
     {"-",        E_MINUS},
@@ -91,7 +91,7 @@ std::map<std::string, ExprType> primitives = {
  * Note: and/or have been moved to primitives to support function-style usage
  * while maintaining their short-circuit evaluation behavior.
  */
-std::map<std::string, ExprType> reserved_words = {
+std::unordered_map<std::string, ExprType> reserved_words = {
     // Control flow constructs
     {"begin",   E_BEGIN},    
     {"quote",   E_QUOTE},    

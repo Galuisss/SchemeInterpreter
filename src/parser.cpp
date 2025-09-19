@@ -20,8 +20,8 @@ using std::string;
 using std::vector;
 using std::pair;
 
-extern std::map<std::string, ExprType> primitives;
-extern std::map<std::string, ExprType> reserved_words;
+extern std::unordered_map<std::string, ExprType> primitives;
+extern std::unordered_map<std::string, ExprType> reserved_words;
 
 Expr Syntax::parse() {
     return (*this)->parse();

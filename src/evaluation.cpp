@@ -21,8 +21,8 @@
 #include <memory>
 #include <cctype>
 
-extern std::map<std::string, ExprType> primitives;
-extern std::map<std::string, ExprType> reserved_words;
+extern std::unordered_map<std::string, ExprType> primitives;
+extern std::unordered_map<std::string, ExprType> reserved_words;
 
 Expr self_evaluating::eval(const EnvPtr &) {
     return Expr(this);

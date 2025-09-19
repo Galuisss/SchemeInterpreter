@@ -61,7 +61,7 @@ inline std::ostream &operator<<(std::ostream &os, const Expr &v) {
 }
 
 struct Env {
-    std::map<std::string, Expr> bindings;
+    std::unordered_map<std::string, Expr> bindings;
     EnvPtr parent;
 
     Env();

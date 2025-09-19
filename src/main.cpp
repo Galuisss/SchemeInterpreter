@@ -6,8 +6,8 @@
 #include <iostream>
 #include <map>
 
-extern std::map<std::string, ExprType> primitives;
-extern std::map<std::string, ExprType> reserved_words;
+extern std::unordered_map<std::string, ExprType> primitives;
+extern std::unordered_map<std::string, ExprType> reserved_words;
 
 void REPL(){
     // read - evaluation - print loop
