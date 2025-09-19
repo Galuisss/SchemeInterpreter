@@ -69,8 +69,8 @@ struct Env {
 };
 
 // Environment operations
-void modify(const std::string&, const Expr &, const EnvPtr &);
-void add_bind(const std::string&, const Expr &, const EnvPtr &);
+void safe_modify(const std::string&, const Expr &, const EnvPtr &);
+void safe_add_bind(const std::string&, const Expr &, const EnvPtr &);
 Expr find(const std::string &, const EnvPtr &);
 
 struct self_evaluating : ExprBase{

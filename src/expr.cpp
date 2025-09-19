@@ -74,6 +74,30 @@ Expr find(const std::string &x, const EnvPtr &env) {
     return Expr(nullptr);
 }
 
+bool is_valid_var(const std::string &s) {
+    if (s.empty()) return false;
+    if (0 <= s[0]-'0' && s[0]-'0' <= 9 || s[0] == '@' || s[0] == '.') return false;
+    for (char c : s) {
+        if (std::isspace(static_cast<unsigned char>(c))) return false;
+        if (c == '#' || c == '\'' || c == '"' || c == '`') return false;
+    }
+    return true;
+}
+
+void assert_valid_var(const std::string &s) {
+    if (!is_valid_var(s)) throw(RuntimeError("not a valid variable name!"));
+}
+
+void safe_add_bind(const std::string &x, const Expr &v, const EnvPtr &env) {
+    assert_valid_var(x);
+    add_bind(x, v, env);
+}
+
+void safe_modify(const std::string &x, const Expr &v, const EnvPtr &env) {
+    assert_valid_var(x);
+    modify(x, v, env);
+}
+
 //BASIC TYPES AND LITERALS
 
 self_evaluating::self_evaluating(ExprType et) : ExprBase(et) {}
